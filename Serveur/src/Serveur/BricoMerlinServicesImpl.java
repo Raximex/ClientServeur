@@ -6,26 +6,11 @@ import java.sql.*;
 public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
     private static String url = "jdbc:mysql://localhost:3306/GestionArticles";
-
-    public static void main(String[] args) {
-
-        Connection con = null;
+    private static Connection con = null;
+    public BricoMerlinServicesImpl() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(url, "root","");
-            Statement requete = con.createStatement();
-            ResultSet resultats = requete.executeQuery("Select * from Article;");
-            ResultSetMetaData rsmd = resultats.getMetaData();
-            int nbCols = rsmd.getColumnCount();
-            boolean encore = resultats.next();
-
-            while (encore) {
-
-                for (int i = 1; i <= nbCols; i++)
-                    System.out.print(resultats.getString(i) + " ");
-                System.out.println();
-                encore = resultats.next();
-            }
         } catch (SQLException s){
             s.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -42,8 +27,22 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
     }
 
     @Override
-    public void ConsulterArticle(String refArticle) throws RemoteException {
+    public String[] ConsulterArticle(String refArticle) throws RemoteException, SQLException {
+        String requete = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID =" + refArticle + ";";
+        String[] resultatRenvoye = new String[4];
+        Statement requeteStatement = con.createStatement();
+        ResultSet resultats = requeteStatement.executeQuery(requete);
+        ResultSetMetaData rsmd = resultats.getMetaData();
+        int nbCols = rsmd.getColumnCount();
+        boolean encore = resultats.next();
 
+        while (encore) {
+            for (int i = 1; i <= nbCols; i++)
+                resultatRenvoye[i] = resultats.getString(i);
+
+            encore = resultats.next();
+        }
+        return resultatRenvoye;
     }
 
     @Override
