@@ -42,6 +42,8 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
             encore = resultats.next();
         }
+
+
         return resultatRenvoye;
     }
 
