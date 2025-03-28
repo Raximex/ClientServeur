@@ -11,10 +11,10 @@ public interface IBricoMerlinServices extends Remote {
    String[] ConsulterArticle(String refArticle) throws RemoteException, SQLException;
 
    //Récupère la liste d'article en fonction de sa famille. Seul les articles avec un stock > 0 sont récupérés.
-   void ConsulterFamille(String familleArticle) throws RemoteException;
+   String[] ConsulterFamille(String familleArticle) throws RemoteException, SQLException;
 
    //Ajoute l'article demandé à la facture et retire du stock la quantité demandée.
-   void AcheterArticle(String refArticle, int qte) throws RemoteException;
+   void AcheterArticle(String refArticle, int qte) throws RemoteException, SQLException;
 
    //Ajoute une quantité de stock à une référence article. La référence doit déjà exister.
    void AjouterStockArticle(String refArticle, int qte) throws RemoteException;
