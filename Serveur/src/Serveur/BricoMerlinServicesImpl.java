@@ -99,7 +99,29 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
     @Override
     public void AjouterStockArticle(String refArticle, int qte) throws RemoteException {
+    String requeteRecupArticle = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID =" + refArticle +";";
 
+        String[] resultatRenvoye = new String[1024];
+        Statement requeteStatement = con.createStatement();
+        ResultSet resultats = requeteStatement.executeQuery(requeteRecupArticle);
+        ResultSetMetaData rsmd = resultats.getMetaData();
+        int nbCols = rsmd.getColumnCount();
+        boolean encore = resultats.next();
+
+        while(encore) {
+            for(int i = 1; i<= nbCols; i++)
+                resultatRenvoye[i] = resultats.getString(i);
+
+            encore = resultats.next();
+        }
+
+        int qteRenvoye = Integer.parseInt(resultatRenvoye[3]) + qte;
+
+        String requeteMajArticle = "UPDATE Article SET nb_total = " + qteRenvoye + "where reference_ID = " + refArticle + ";";
+        Statement requeteStatementUpdate = con.createStatement();
+        ResultSet resultatUpdate = requeteStatementUpdate.executeQuery(requeteRecupArticle);
+    
+        requeteStatement.close(); // fin de requete
     }
 
     @Override
@@ -109,7 +131,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
     @Override
     public void ConsulterFacture(String idFacture) throws RemoteException {
-
+        
     }
 
     @Override
