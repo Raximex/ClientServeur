@@ -19,6 +19,8 @@ public class Server {
         } catch (Exception e) {
             System.err.println("❌ Erreur lors du démarrage du serveur :");
             e.printStackTrace();
+
+            //diff
         }
     }
 }
