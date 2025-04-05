@@ -2,6 +2,7 @@ package Serveur;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -10,11 +11,12 @@ import java.util.Calendar;
 import java.util.Scanner;
 
 
-public class BricoMerlinServicesImpl implements IBricoMerlinServices{
+public class BricoMerlinServicesImpl extends UnicastRemoteObject implements IBricoMerlinServices{
 
     private static String url = "jdbc:mysql://localhost:3306/GestionArticles";
     private static Connection con = null;
-    public BricoMerlinServicesImpl() {
+    public BricoMerlinServicesImpl() throws RemoteException {
+        super();
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(url, "root","");
@@ -22,7 +24,8 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
             s.printStackTrace();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
-        } finally {
+        }
+        finally {
             if (con != null) {
                 try {
                     con.close();
