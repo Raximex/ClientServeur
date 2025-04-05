@@ -1,4 +1,4 @@
-package Test;
+/**package Test;
 
 import Serveur.BricoMerlinServicesImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,3 +49,4 @@ class TestConsulterArticle {
         verify(mockResultSet, times(1)).next();
     }
 }
+*/

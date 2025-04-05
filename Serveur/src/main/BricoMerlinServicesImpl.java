@@ -1,16 +1,22 @@
 package Serveur;
+import java.io.File;
+import java.io.IOException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.io.FileWriter;
+import java.util.Calendar;
 import java.util.Scanner;
 
 
-public class BricoMerlinServicesImpl implements IBricoMerlinServices{
+public class BricoMerlinServicesImpl extends UnicastRemoteObject implements IBricoMerlinServices{
 
     private static String url = "jdbc:mysql://localhost:3306/GestionArticles";
     private static Connection con = null;
-    public BricoMerlinServicesImpl() {
+    public BricoMerlinServicesImpl() throws RemoteException {
+        super();
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(url, "root","");
@@ -18,7 +24,8 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
             s.printStackTrace();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
-        } finally {
+        }
+        finally {
             if (con != null) {
                 try {
                     con.close();
@@ -94,10 +101,11 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         
         try{
             FileWriter writerFacture = new FileWriter("facture_" + timeStamp); //Mettre un chemin relatif
-            writerFacture.write("Facture du " timeStamp + "\n" + resultatRenvoye[0] + " " + resultatRenvoye[1] + " " + resultatRenvoye[2]) // a tester
+            writerFacture.write("Facture du "
+                    + timeStamp + "\n" + resultatRenvoye[0] + " " + resultatRenvoye[1] + " " + resultatRenvoye[2]); // a tester
             writerFacture.close();
         } catch (IOException e){
-            e.printStackTrace;
+            e.printStackTrace();
         }
 
 
@@ -111,7 +119,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
     }
 
     @Override
-    public void AjouterStockArticle(String refArticle, int qte) throws RemoteException {
+    public void AjouterStockArticle(String refArticle, int qte) throws RemoteException, SQLException {
     String requeteRecupArticle = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID =" + refArticle +";";
 
         String[] resultatRenvoye = new String[64];
@@ -144,16 +152,15 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
     @Override
     public String ConsulterFacture(String idFacture) throws RemoteException {
+        String dataFacture = null;
         try {
-            String dataFacture = null;
+            dataFacture = null;
             Scanner readerFacture = new Scanner(new File(idFacture));
-            while(readerFacture.hasNextLine())
-            {
+            while (readerFacture.hasNextLine()) {
                 dataFacture = readerFacture.nextLine();
             }
             readerFacture.close();
-        } catch(IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return dataFacture;
