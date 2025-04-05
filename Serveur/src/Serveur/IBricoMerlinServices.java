@@ -17,7 +17,7 @@ public interface IBricoMerlinServices extends Remote {
    void AcheterArticle(String refArticle, int qte) throws RemoteException, SQLException;
 
    //Ajoute une quantité de stock à une référence article. La référence doit déjà exister.
-   void AjouterStockArticle(String refArticle, int qte) throws RemoteException;
+   void AjouterStockArticle(String refArticle, int qte) throws RemoteException, SQLException;
 
    //#endregion
 
