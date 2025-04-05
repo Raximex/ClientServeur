@@ -1,4 +1,4 @@
-/*package Test;
+/**package Test;
 
 import Serveur.BricoMerlinServicesImpl;
 import org.junit.jupiter.api.BeforeEach;
