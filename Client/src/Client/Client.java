@@ -1,5 +1,5 @@
 package Client;
-import Serveur.IBricoMerlinServices;
+import Client.IBricoMerlinServices;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
