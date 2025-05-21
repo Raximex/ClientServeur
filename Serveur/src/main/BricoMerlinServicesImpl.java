@@ -1,12 +1,9 @@
 package Serveur;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.io.FileWriter;
 import java.util.Calendar;
 import java.util.Scanner;
 
@@ -84,7 +81,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
     @Override
     public void AcheterArticle(String refArticle, int qte) throws RemoteException, SQLException {
-        String requeteRecupArticle = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID ='"+ refArticle +"';";
+        String requeteRecupArticle = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID ='" + refArticle + "';";
         PreparedStatement requeteStatement = con.prepareStatement(requeteRecupArticle);
 
         String[] resultatRenvoye = new String[64];
@@ -114,7 +111,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
 
 
-        String requeteMajArticle = "UPDATE Article SET nb_total = " + qteRenvoye + "where reference_ID ='" + refArticle + "';";
+        String requeteMajArticle = "UPDATE Article SET nb_total = " + qteRenvoye + " where reference_ID ='" + refArticle + "';";
         PreparedStatement requeteStatementMaj = con.prepareStatement(requeteMajArticle);
 
         int resultatUpdate = requeteStatementMaj.executeUpdate(requeteMajArticle);
@@ -139,18 +136,31 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
             encore = resultats.next();
         }
 
-        int qteRenvoye = Integer.parseInt(resultatRenvoye[3]) + qte; //Nouvel quantité du stock après ajout de stock
+        int qteRenvoye = Integer.parseInt(resultatRenvoye[4]) + qte; //Nouvel quantité du stock après ajout de stock
 
-        String requeteMajArticle = "UPDATE Article SET nb_total = " + qteRenvoye + "where reference_ID = " + refArticle + ";";
-        Statement requeteStatementUpdate = con.createStatement();
-        ResultSet resultatUpdate = requeteStatementUpdate.executeQuery(requeteMajArticle);
+        String requeteMajArticle = "UPDATE Article SET nb_total = " + qteRenvoye + " where reference_ID = '" + refArticle + "';";
+
+        PreparedStatement requeteStatementMaj = con.prepareStatement(requeteMajArticle);
+
+        int resultatUpdate = requeteStatementMaj.executeUpdate(requeteMajArticle);
 
         requeteStatement.close(); // fin de requete
     }
 
     @Override
-    public void PayerFacture(String idFacture) throws RemoteException {
+    public String[] PayerFacture(String idFacture) throws IOException {
+        String[] paye = new String[2];
+        File file = new File(idFacture);
+        Scanner reader = new Scanner(file);
+        int i = 0;
 
+        while(reader.hasNextLine()) {
+            paye[i] = reader.nextLine();
+            i++;
+        }
+        reader.close();
+
+        return paye;
     }
 
     @Override

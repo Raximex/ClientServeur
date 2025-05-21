@@ -7,6 +7,7 @@ import java.awt.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 public class Client extends JFrame {
     private IBricoMerlinServices stub;
@@ -134,8 +135,12 @@ public class Client extends JFrame {
     private void payerFacture() {
         String id = JOptionPane.showInputDialog(this, "ID de la facture à payer :");
         try {
-            stub.PayerFacture(id);
-            JOptionPane.showMessageDialog(this, " Facture payée.");
+            String[] facture = stub.PayerFacture(id);
+            StringBuilder sb = new StringBuilder(" Votre facture :\n\n");
+            for(String s : facture) {
+                if (s != null) sb.append(s).append("\n");
+            }
+            JOptionPane.showMessageDialog(this, sb.toString());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
         }
