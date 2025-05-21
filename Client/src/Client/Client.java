@@ -1,166 +1,175 @@
 package Client;
-import Client.IBricoMerlinServices;
 
-import java.rmi.RemoteException;
+import Serveur.IBricoMerlinServices;
+
+import javax.swing.*;
+import java.awt.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.sql.SQLException;
-import java.util.Scanner;
+import java.util.Arrays;
 
-public class Client {
-    public static void main(String[] args) {
+public class Client extends JFrame {
+    private IBricoMerlinServices stub;
+
+    public Client() {
         try {
-            // Connexion au registre RMI sur localhost, port 1099
-            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-            // Récupération de l'objet distant sous le nom "BricoMerlinService"
-            IBricoMerlinServices stub = (IBricoMerlinServices) registry.lookup("BricoMerlinService");
-
-            Scanner scanner = new Scanner(System.in);
-            int choix = 0;
-
-            while (true) {
-                System.out.println("=====================================");
-                System.out.println("Menu Brico-Merlin");
-                System.out.println("1. Consulter un article (par référence)");
-                System.out.println("2. Consulter une famille d'articles");
-                System.out.println("3. Acheter un article");
-                System.out.println("4. Ajouter du stock à un article");
-                System.out.println("5. Payer une facture");
-                System.out.println("6. Consulter une facture");
-                System.out.println("7. Calculer le chiffre d'affaires pour une date");
-                System.out.println("8. Quitter");
-                System.out.print("Votre choix : ");
-                choix = scanner.nextInt();
-                scanner.nextLine(); // Consommation du retour à la ligne
-
-                switch (choix) {
-                    case 1:
-                        // Consulter un article
-                        System.out.print("Entrez la référence de l'article : ");
-                        String refArticle = scanner.nextLine();
-                        try {
-                            String[] article = stub.ConsulterArticle(refArticle);
-                            if (article != null && article[0] != null) {
-                                System.out.println("Détails de l'article :");
-                                System.out.println("Référence     : " + article[0]);
-                                System.out.println("Famille       : " + article[1]);
-                                System.out.println("Prix unitaire : " + article[2]);
-                                System.out.println("Stock total   : " + article[3]);
-                            } else {
-                                System.out.println("Article non trouvé.");
-                            }
-                        } catch (RemoteException | SQLException e) {
-                            System.out.println("Erreur lors de la consultation de l'article : " + e.getMessage());
-                        }
-                        break;
-
-                    case 2:
-                        // Consulter une famille d'articles
-                        System.out.print("Entrez le nom de la famille d'articles : ");
-                        String famille = scanner.nextLine();
-                        try {
-                            // Supposons que la méthode renvoie un tableau de chaînes avec les articles
-                            String[] articlesFamille = stub.ConsulterFamille(famille);
-                            if (articlesFamille != null) {
-                                System.out.println("Articles de la famille " + famille + " :");
-                                // Parcourir le tableau et afficher les entrées non nulles
-                                for (int i = 0; i < articlesFamille.length; i++) {
-                                    if (articlesFamille[i] != null) {
-                                        System.out.println(articlesFamille[i]);
-                                    }
-                                }
-                            } else {
-                                System.out.println("Aucun article trouvé pour cette famille.");
-                            }
-                        } catch (RemoteException | SQLException e) {
-                            System.out.println("Erreur lors de la consultation de la famille : " + e.getMessage());
-                        }
-                        break;
-
-                    case 3:
-                        // Acheter un article
-                        System.out.print("Entrez la référence de l'article à acheter : ");
-                        String refAchat = scanner.nextLine();
-                        System.out.print("Entrez la quantité à acheter : ");
-                        int quantite = scanner.nextInt();
-                        scanner.nextLine();
-                        try {
-                            stub.AcheterArticle(refAchat, quantite);
-                            System.out.println("Achat effectué avec succès.");
-                        } catch (RemoteException | SQLException e) {
-                            System.out.println("Erreur lors de l'achat de l'article : " + e.getMessage());
-                        }
-                        break;
-
-                    case 4:
-                        // Ajouter du stock à un article
-                        System.out.print("Entrez la référence de l'article : ");
-                        String refStock = scanner.nextLine();
-                        System.out.print("Entrez la quantité à ajouter : ");
-                        int qteAjout = scanner.nextInt();
-                        scanner.nextLine();
-                        try {
-                            stub.AjouterStockArticle(refStock, qteAjout);
-                            System.out.println("Stock ajouté avec succès.");
-                        } catch (RemoteException e) {
-                            System.out.println("Erreur lors de l'ajout du stock : " + e.getMessage());
-                        }
-                        break;
-
-                    case 5:
-                        // Payer une facture
-                        System.out.print("Entrez l'ID de la facture à payer : ");
-                        String idFacture = scanner.nextLine();
-                        try {
-                            stub.PayerFacture(idFacture);
-                            System.out.println("Facture payée avec succès.");
-                        } catch (RemoteException e) {
-                            System.out.println("Erreur lors du paiement de la facture : " + e.getMessage());
-                        }
-                        break;
-
-                    case 6:
-                        // Consulter une facture
-                        System.out.print("Entrez l'ID de la facture à consulter : ");
-                        String idConsulter = scanner.nextLine();
-                        try {
-                            String facture = stub.ConsulterFacture(idConsulter);
-                            if (facture != null) {
-                                System.out.println("Détails de la facture :");
-                                System.out.println(facture);
-                            } else {
-                                System.out.println("Facture non trouvée.");
-                            }
-                        } catch (RemoteException e) {
-                            System.out.println("Erreur lors de la consultation de la facture : " + e.getMessage());
-                        }
-                        break;
-
-                    case 7:
-                        // Calculer le chiffre d'affaires pour une date donnée
-                        System.out.print("Entrez la date (format yyyy-MM-dd) : ");
-                        String date = scanner.nextLine();
-                        try {
-                            stub.CalculerCA(date);
-                            System.out.println("Chiffre d'affaires calculé pour la date " + date + ".");
-                        } catch (RemoteException e) {
-                            System.out.println("Erreur lors du calcul du CA : " + e.getMessage());
-                        }
-                        break;
-
-                    case 8:
-                        System.out.println("Au revoir !");
-                        scanner.close();
-                        System.exit(0);
-                        break;
-
-                    default:
-                        System.out.println("Choix invalide. Veuillez réessayer.");
-                        break;
-                }
-            }
+            Registry registry = LocateRegistry.getRegistry(1099);
+            stub = (IBricoMerlinServices) registry.lookup("BricoMerlinService");
         } catch (Exception e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, " Erreur de connexion au serveur RMI : " + e.getMessage());
+            System.exit(1);
         }
+
+        setTitle("🛠️ BricoMerlin - Interface Client");
+        setSize(700, 500);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridBagLayout());
+        panel.setBackground(new Color(245, 245, 245));
+
+        JLabel title = new JLabel("Bienvenue chez BricoMerlin !");
+        title.setFont(new Font("Arial", Font.BOLD, 24));
+        title.setForeground(new Color(33, 94, 33));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(10, 10, 20, 10);
+        panel.add(title, gbc);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridLayout(8, 1, 10, 10));
+        buttonPanel.setBackground(new Color(245, 245, 245));
+
+        String[] actions = {
+                " Consulter un article",
+                " Consulter une famille d'articles",
+                " Acheter un article",
+                " Ajouter du stock",
+                " Payer une facture",
+                " Consulter une facture",
+                " Calculer le chiffre d'affaires",
+                " Quitter"
+        };
+
+        JButton[] buttons = new JButton[actions.length];
+        for (int i = 0; i < actions.length; i++) {
+            buttons[i] = new JButton(actions[i]);
+            buttons[i].setFocusPainted(false);
+            buttons[i].setFont(new Font("Segoe UI", Font.PLAIN, 16));
+            buttonPanel.add(buttons[i]);
+        }
+
+        gbc.gridy = 1;
+        panel.add(buttonPanel, gbc);
+        add(panel);
+
+        buttons[0].addActionListener(e -> consulterArticle());
+        buttons[1].addActionListener(e -> consulterFamille());
+        buttons[2].addActionListener(e -> acheterArticle());
+        buttons[3].addActionListener(e -> ajouterStock());
+        buttons[4].addActionListener(e -> payerFacture());
+        buttons[5].addActionListener(e -> consulterFacture());
+        buttons[6].addActionListener(e -> calculerCA());
+        buttons[7].addActionListener(e -> System.exit(0));
+    }
+    private void consulterArticle() {
+        String ref = JOptionPane.showInputDialog(this, "Entrer la référence de l'article :");
+        try {
+            String[] article = stub.ConsulterArticle(ref);
+            if (article != null && article[1] != null) {
+                JOptionPane.showMessageDialog(this, String.format("\u2705 Référence : %s\n\uD83D\uDCC4 Famille : %s\n\uD83D\uDCB2 Prix : %s €\n📦 Stock : %s",
+                        article[1], article[2], article[3], article[4]));
+            } else {
+                JOptionPane.showMessageDialog(this, " Article non trouvé.");
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+        }
+    }
+
+    private void consulterFamille() {
+        String nom = JOptionPane.showInputDialog(this, "Nom de la famille d'articles :");
+        try {
+            String[] articles = stub.ConsulterFamille(nom);
+            if (articles != null && articles.length > 1) {
+                StringBuilder sb = new StringBuilder(" Articles dans la famille :\n\n");
+                for (String s : articles) {
+                    if (s != null) sb.append(s).append("\n");
+                }
+                JOptionPane.showMessageDialog(this, sb.toString());
+            } else {
+                JOptionPane.showMessageDialog(this, " Aucun article trouvé pour cette famille.");
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+        }
+    }
+
+    private void acheterArticle() {
+        try {
+            String ref = JOptionPane.showInputDialog(this, "Référence de l'article :");
+            int qte = Integer.parseInt(JOptionPane.showInputDialog(this, "Quantité à acheter :"));
+            stub.AcheterArticle(ref, qte);
+            JOptionPane.showMessageDialog(this, " Achat effectué avec succès.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+        }
+    }
+
+    private void ajouterStock() {
+        try {
+            String ref = JOptionPane.showInputDialog(this, "Référence de l'article :");
+            int qte = Integer.parseInt(JOptionPane.showInputDialog(this, "Quantité à ajouter :"));
+            stub.AjouterStockArticle(ref, qte);
+            JOptionPane.showMessageDialog(this, " Stock ajouté avec succès.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+        }
+    }
+
+    private void payerFacture() {
+        String id = JOptionPane.showInputDialog(this, "ID de la facture à payer :");
+        try {
+            String[] facture = stub.PayerFacture(id);
+            StringBuilder sb = new StringBuilder(" Votre facture :\n\n");
+            for(String s : facture) {
+                if (s != null) sb.append(s).append("\n");
+            }
+            JOptionPane.showMessageDialog(this, sb.toString());
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+        }
+    }
+
+    private void consulterFacture() {
+        String id = JOptionPane.showInputDialog(this, "ID de la facture :");
+        try {
+            String facture = stub.ConsulterFacture(id);
+            JOptionPane.showMessageDialog(this, facture != null ? facture : " Facture non trouvée.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+        }
+    }
+
+    private void calculerCA() {
+        String date = JOptionPane.showInputDialog(this, "Entrer la date (yyyy-MM-dd) :");
+        try {
+            stub.CalculerCA(date);
+            JOptionPane.showMessageDialog(this, " Chiffre d'affaires calculé pour " + date);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            Client gui = new Client();
+            gui.setVisible(true);
+        });
     }
 }

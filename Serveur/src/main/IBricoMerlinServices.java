@@ -1,5 +1,6 @@
 package Serveur;
 
+import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
@@ -23,7 +24,7 @@ public interface IBricoMerlinServices extends Remote {
 
    //#region Facture
    //Permet à un client de payer sa facture.
-   void PayerFacture(String idFacture) throws RemoteException;
+   String[] PayerFacture(String idFacture) throws IOException;
 
    //Récupère les informations de la facture (ticket de caisse) demandée.
    String ConsulterFacture(String idFacture) throws RemoteException;
