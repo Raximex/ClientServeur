@@ -11,7 +11,7 @@ import java.util.Calendar;
 import java.util.Scanner;
 
 
-public class BricoMerlinServicesImpl extends UnicastRemoteObject implements IBricoMerlinServices{
+public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
     private static String url = "jdbc:mysql://localhost:3306/GestionArticles";
     private static Connection con = null;
@@ -25,7 +25,8 @@ public class BricoMerlinServicesImpl extends UnicastRemoteObject implements IBri
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        finally {
+       /* finally { //A voir si ca doit rester ca
+
             if (con != null) {
                 try {
                     con.close();
@@ -33,14 +34,14 @@ public class BricoMerlinServicesImpl extends UnicastRemoteObject implements IBri
                     e.printStackTrace();
                 }
             }
-        }
+        }*/
     }
 
     @Override
     public String[] ConsulterArticle(String refArticle) throws RemoteException, SQLException {
-        String requete = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID =" + refArticle + ";";
-        String[] resultatRenvoye = new String[4];
-        Statement requeteStatement = con.createStatement();
+        String requete = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID ='" + refArticle + "';";
+        PreparedStatement requeteStatement = con.prepareStatement(requete);
+        String[] resultatRenvoye = new String[5];
         ResultSet resultats = requeteStatement.executeQuery(requete);
         ResultSetMetaData rsmd = resultats.getMetaData();
         int nbCols = rsmd.getColumnCount();
@@ -52,38 +53,41 @@ public class BricoMerlinServicesImpl extends UnicastRemoteObject implements IBri
 
             encore = resultats.next();
         }
-
-
         return resultatRenvoye;
     }
 
     @Override
     public String[] ConsulterFamille(String familleArticle) throws RemoteException, SQLException {
-        String requete = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article,Famille where famille_article=id_famille and nom_famille =" + familleArticle +";";
-        String[] resultatRenvoye = new String[1024];
-        Statement requeteStatement = con.createStatement();
+        String requete = "SELECT reference_ID, famille_article, prix_unitaire, nb_total " +
+                "FROM Article, Famille " +
+                "WHERE Famille.id_famille = Article.famille_article AND nom_famille = '" + familleArticle + "';";
+        PreparedStatement requeteStatement = con.prepareStatement(requete);
+
+        String[] resultatRenvoye = new String[64];
         ResultSet resultats = requeteStatement.executeQuery(requete);
         ResultSetMetaData rsmd = resultats.getMetaData();
         int nbCols = rsmd.getColumnCount();
-        boolean encore = resultats.next();
 
-        while (encore) {
-            for (int i = 1; i <= nbCols; i++)
-                resultatRenvoye[i] = resultats.getString(i);
+        int index = 1;  // pour remplir le tableau à plat
 
-            encore = resultats.next();
+        while (resultats.next()) {
+            for (int col = 1; col <= nbCols; col++) {
+                resultatRenvoye[index] = resultats.getString(col);
+                index++;
+            }
         }
-        requeteStatement.close(); // fin de requete
 
+        requeteStatement.close();
         return resultatRenvoye;
     }
 
+
     @Override
     public void AcheterArticle(String refArticle, int qte) throws RemoteException, SQLException {
-        String requeteRecupArticle = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID =" + refArticle +";";
+        String requeteRecupArticle = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID ='"+ refArticle +"';";
+        PreparedStatement requeteStatement = con.prepareStatement(requeteRecupArticle);
 
         String[] resultatRenvoye = new String[64];
-        Statement requeteStatement = con.createStatement();
         ResultSet resultats = requeteStatement.executeQuery(requeteRecupArticle);
         ResultSetMetaData rsmd = resultats.getMetaData();
         int nbCols = rsmd.getColumnCount();
@@ -96,13 +100,13 @@ public class BricoMerlinServicesImpl extends UnicastRemoteObject implements IBri
             encore = resultats.next();
         }
 
-        int qteRenvoye = Integer.parseInt(resultatRenvoye[3]) - qte; // calcul de la nouvelle quantité
+        int qteRenvoye = Integer.parseInt(resultatRenvoye[4]) - qte; // calcul de la nouvelle quantité
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime()); //date du jour
         
         try{
             FileWriter writerFacture = new FileWriter("facture_" + timeStamp); //Mettre un chemin relatif
             writerFacture.write("Facture du "
-                    + timeStamp + "\n" + resultatRenvoye[0] + " " + resultatRenvoye[1] + " " + resultatRenvoye[2]); // a tester
+                    + timeStamp + "\n" + resultatRenvoye[1] + " " + resultatRenvoye[2] + " " + resultatRenvoye[3]); // a tester
             writerFacture.close();
         } catch (IOException e){
             e.printStackTrace();
@@ -110,17 +114,16 @@ public class BricoMerlinServicesImpl extends UnicastRemoteObject implements IBri
 
 
 
-        String requeteMajArticle = "UPDATE Article SET nb_total = " + qteRenvoye + "where reference_ID = " + refArticle + ";";
-        Statement requeteStatementUpdate = con.createStatement();
-        ResultSet resultatUpdate = requeteStatementUpdate.executeQuery(requeteRecupArticle);
+        String requeteMajArticle = "UPDATE Article SET nb_total = " + qteRenvoye + "where reference_ID ='" + refArticle + "';";
+        PreparedStatement requeteStatementMaj = con.prepareStatement(requeteMajArticle);
 
+        int resultatUpdate = requeteStatementMaj.executeUpdate(requeteMajArticle);
         requeteStatement.close(); // fin de requete
-
     }
 
     @Override
     public void AjouterStockArticle(String refArticle, int qte) throws RemoteException, SQLException {
-    String requeteRecupArticle = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID =" + refArticle +";";
+    String requeteRecupArticle = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID ='" + refArticle +"';";
 
         String[] resultatRenvoye = new String[64];
         Statement requeteStatement = con.createStatement();
@@ -140,8 +143,8 @@ public class BricoMerlinServicesImpl extends UnicastRemoteObject implements IBri
 
         String requeteMajArticle = "UPDATE Article SET nb_total = " + qteRenvoye + "where reference_ID = " + refArticle + ";";
         Statement requeteStatementUpdate = con.createStatement();
-        ResultSet resultatUpdate = requeteStatementUpdate.executeQuery(requeteRecupArticle);
-    
+        ResultSet resultatUpdate = requeteStatementUpdate.executeQuery(requeteMajArticle);
+
         requeteStatement.close(); // fin de requete
     }
 
