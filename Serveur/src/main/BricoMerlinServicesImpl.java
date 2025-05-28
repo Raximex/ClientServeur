@@ -149,7 +149,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
     @Override
     public String[] PayerFacture(String idFacture) throws IOException {
-        String[] paye = new String[2];
+        String[] paye = new String[10];
         File file = new File(idFacture);
         Scanner reader = new Scanner(file);
         int i = 0;
@@ -181,6 +181,13 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
     @Override
     public void CalculerCA(String date) throws RemoteException {
+        File file = new File("Fichier/")
+        File[] listOfFiles = file.listFiles();
 
+        for (File file : listOfFiles) {
+        if (file.isFile() && file.getName.contains(date)) {
+            
+        }
+        }
     }
 }
