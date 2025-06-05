@@ -119,19 +119,24 @@ public class Client extends JFrame {
             while (continuer) {
                 String resultat =JOptionPane.showInputDialog(this, "Référence de l'article :");
                 ref = ref.concat("'" + resultat + "',");
-                System.out.println(ref);
                 qteR[i] = Integer.parseInt(JOptionPane.showInputDialog(this, "Quantité à acheter :"));
                 JOptionPane.showMessageDialog(this, " Achat effectué avec succès.");
 
                 int reponse = JOptionPane.showConfirmDialog(this,"Voulez-vous acheter d'autres articles","Continue",JOptionPane.YES_NO_OPTION);
-                System.out.println(qteR[i]);
                 i++;
                 if(reponse != JOptionPane.YES_OPTION)
                 {
+                    int paye = JOptionPane.showConfirmDialog(this, "Voulez-vous payer maintenant ?");
+                    boolean payer = false;
+                    if (paye == JOptionPane.YES_OPTION) {
+                        payer = true;
+                    } else {
+                        payer = false;
+                    }
                     StringBuilder chaine = new StringBuilder(ref);
                     chaine.deleteCharAt(chaine.length()-1);
-                    System.out.println(chaine);
-                    stub.AcheterArticle(String.valueOf(chaine), qteR);
+                    //System.out.println(chaine);
+                    stub.AcheterArticle(String.valueOf(chaine), qteR, payer);
                     continuer = false;
                 }
             }
@@ -161,6 +166,7 @@ public class Client extends JFrame {
                 if (s != null) sb.append(s).append("\n");
             }
             JOptionPane.showMessageDialog(this, sb.toString());
+            JOptionPane.showMessageDialog(this, "Facture payée avec succès");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
         }
@@ -179,8 +185,8 @@ public class Client extends JFrame {
     private void calculerCA() {
         String date = JOptionPane.showInputDialog(this, "Entrer la date (yyyy-MM-dd) :");
         try {
-            stub.CalculerCA(date);
-            JOptionPane.showMessageDialog(this, " Chiffre d'affaires calculé pour " + date);
+            float ca = stub.CalculerCA(date);
+            JOptionPane.showMessageDialog(this, " Chiffre d'affaires calculé pour " + date + " : " + ca);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
         }

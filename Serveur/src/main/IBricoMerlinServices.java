@@ -15,7 +15,7 @@ public interface IBricoMerlinServices extends Remote {
    String[] ConsulterFamille(String familleArticle) throws RemoteException, SQLException;
 
    //Ajoute l'article demandé à la facture et retire du stock la quantité demandée.
-   void AcheterArticle(String refArticle, int[] qte) throws RemoteException, SQLException;
+   void AcheterArticle(String refArticle, int[] qte, boolean paye) throws RemoteException, SQLException;
 
    //Ajoute une quantité de stock à une référence article. La référence doit déjà exister.
    void AjouterStockArticle(String refArticle, int qte) throws RemoteException, SQLException;
@@ -24,13 +24,13 @@ public interface IBricoMerlinServices extends Remote {
 
    //#region Facture
    //Permet à un client de payer sa facture.
-   String[] PayerFacture(String idFacture) throws IOException;
+   String[] PayerFacture(String idFacture) throws IOException, SQLException;
 
    //Récupère les informations de la facture (ticket de caisse) demandée.
    String[] ConsulterFacture(String idFacture) throws RemoteException;
 
    //Calcule le chiffre d’affaire à une date donnée en fonction des factures de cette date.
-   void CalculerCA(String date) throws RemoteException;
+   float CalculerCA(String date) throws RemoteException, SQLException;
 
    //#endregion
 }

@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 
 
 public class BricoMerlinServicesImpl implements IBricoMerlinServices{
@@ -14,7 +15,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         super();
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(url, "root","");
+            con = DriverManager.getConnection(url, "root","root");
         } catch (SQLException s){
             s.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -78,7 +79,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
 
     @Override
-    public void AcheterArticle(String refArticle, int[] qte) throws RemoteException, SQLException {
+    public void AcheterArticle(String refArticle, int[] qte, boolean paye) throws RemoteException, SQLException {
         String requeteRecupArticle = "SELECT reference_ID, prix_unitaire, nb_total FROM Article WHERE reference_ID IN (" + refArticle + ")";
 
         try (
@@ -91,6 +92,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
             List<String[]> lignesArticles = new ArrayList<>();
             List<String> refs = new ArrayList<>();
             List<Integer> stocks = new ArrayList<>();
+            List<Float> prixUnitaires = new ArrayList<>();
 
             while (resultats.next()) {
                 String[] ligne = new String[nbCols];
@@ -100,13 +102,16 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
                 lignesArticles.add(ligne);
                 refs.add(resultats.getString("reference_ID"));
                 stocks.add(resultats.getInt("nb_total"));
+                prixUnitaires.add(resultats.getFloat("prix_unitaire"));
             }
 
             // Génération de la facture
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-            try (FileWriter writerFacture = new FileWriter("facture_" + timeStamp)) {
+            String nomFacture = "facture_" + timeStamp;
+            try (FileWriter writerFacture = new FileWriter(nomFacture)) {
                 writerFacture.write("Facture du " + timeStamp + "\n");
 
+                float montantTotal = 0;
                 for (int i = 0; i < lignesArticles.size(); i++) {
                     String[] ligne = lignesArticles.get(i);
                     for (int j = 0; j < nbCols; j++) {
@@ -115,9 +120,20 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
                        }*/
                         writerFacture.write(rsmd.getColumnLabel(j + 1) + " : " + ligne[j] + "\n");
                     }
-                    writerFacture.write("Quantité : " + qte[i] + "\n---\n");
-                }
+                    writerFacture.write("Quantité : " + qte[i] + "\n");
+                    float prixTotal = qte[i] * prixUnitaires.get(i);
+                    writerFacture.write("Prix total : " + prixTotal + "\n---\n");
 
+                    montantTotal = montantTotal + prixTotal;
+                }
+                writerFacture.write("---\n Total : " + montantTotal);
+
+                String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
+                System.out.println(date);
+                String requeteCreationFacture = "INSERT INTO Facture (facture_ID, paye, montant, date_facture) VALUES ('"+ nomFacture +"', "+ paye +", " + montantTotal + ", '" + date + "')";
+                PreparedStatement requeteStatementMaj = con.prepareStatement(requeteCreationFacture);
+                int resultatInsert = requeteStatementMaj.executeUpdate(requeteCreationFacture);
+                requeteStatement.close(); // fin de requete
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -174,19 +190,24 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
     }
 
     @Override
-    public String[] PayerFacture(String idFacture) throws IOException {
-        String[] paye = new String[10];
+    public String[] PayerFacture(String idFacture) throws IOException, SQLException {
+        String[] facture = new String[256];
         File file = new File(idFacture);
         Scanner reader = new Scanner(file);
         int i = 0;
 
         while(reader.hasNextLine()) {
-            paye[i] = reader.nextLine();
+            facture[i] = reader.nextLine();
             i++;
         }
         reader.close();// a réfléchir encore pour la suite de la fonction
 
-        return paye;
+        String requeteMajFacture = "UPDATE Facture SET paye = 1 WHERE facture_ID = '" + idFacture + "';";
+        PreparedStatement requeteStatementMaj = con.prepareStatement(requeteMajFacture);
+        int resultatUpdate = requeteStatementMaj.executeUpdate(requeteMajFacture);
+        requeteStatementMaj.close();
+
+        return facture;
     }
 
     @Override
@@ -207,14 +228,20 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
     }
 
     @Override
-    public void CalculerCA(String date) throws RemoteException {
-        File file = new File("Fichier/")
-        File[] listOfFiles = file.listFiles();
+    public float CalculerCA(String date) throws RemoteException, SQLException {
+        String requeteRecupeFactureJournee = "SELECT montant FROM Facture WHERE date_facture = '" + date + "' AND paye = 1;";
+        PreparedStatement requeteStatement = con.prepareStatement(requeteRecupeFactureJournee);
+        String[] resultatRenvoye = new String[64];
+        ResultSet resultats = requeteStatement.executeQuery(requeteRecupeFactureJournee);
+        ResultSetMetaData rsmd = resultats.getMetaData();
+        int nCols = rsmd.getColumnCount();
 
-        for (File file : listOfFiles) {
-        if (file.isFile() && file.getName.contains(date)) {
-            
+        float ca = 0;
+        while(resultats.next()) {
+            for(int i = 1; i<= nCols; i++){
+                ca = ca + resultats.getFloat("montant");
+            }
         }
-        }
+        return ca;
     }
 }
