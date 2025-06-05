@@ -112,13 +112,30 @@ public class Client extends JFrame {
 
     private void acheterArticle() {
         try {
-            while(JOptionPane.showInputDialog(this,"Fin ? ").equals(false)) {
-                String ref = JOptionPane.showInputDialog(this, "Référence de l'article :").concat(",");
+            String ref ="";
+            int[] qteR = new int[10];
+            boolean continuer = true;
+            int i = 0;
+            while (continuer) {
+                String resultat =JOptionPane.showInputDialog(this, "Référence de l'article :");
+                ref = ref.concat("'" + resultat + "',");
                 System.out.println(ref);
-                int qte = Integer.parseInt(JOptionPane.showInputDialog(this, "Quantité à acheter :"));
+                qteR[i] = Integer.parseInt(JOptionPane.showInputDialog(this, "Quantité à acheter :"));
                 JOptionPane.showMessageDialog(this, " Achat effectué avec succès.");
+
+                int reponse = JOptionPane.showConfirmDialog(this,"Voulez-vous acheter d'autres articles","Continue",JOptionPane.YES_NO_OPTION);
+                System.out.println(qteR[i]);
+                i++;
+                if(reponse != JOptionPane.YES_OPTION)
+                {
+                    StringBuilder chaine = new StringBuilder(ref);
+                    chaine.deleteCharAt(chaine.length()-1);
+                    System.out.println(chaine);
+                    stub.AcheterArticle(String.valueOf(chaine), qteR);
+                    continuer = false;
+                }
             }
-           // stub.AcheterArticle(ref, qte);
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
         }
