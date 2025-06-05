@@ -13,7 +13,7 @@ public class Server {
     private ISiegeServeur stub;
     public Server() throws RemoteException, SQLException {
         try {
-            Registry registry = LocateRegistry.getRegistry(1096);
+            Registry registry = LocateRegistry.getRegistry(1100);
             stub = (ISiegeServeur) registry.lookup("SiegeServeur");
         } catch (Exception e) {
             throw new RemoteException(e.getMessage());
@@ -24,7 +24,6 @@ public class Server {
     }
 
     public static void main(String[] args) throws SQLException, RemoteException {
-        Server server = new Server();
         try {
             // Lancer le registre RMI
             LocateRegistry.createRegistry(1099);
@@ -43,6 +42,6 @@ public class Server {
             System.err.println("❌ Erreur lors du démarrage du serveur :");
             e.printStackTrace();
         }
-
+        Server server = new Server();
     }
 }
