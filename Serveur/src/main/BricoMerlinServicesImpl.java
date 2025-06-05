@@ -158,19 +158,20 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
             paye[i] = reader.nextLine();
             i++;
         }
-        reader.close();
+        reader.close();// a réfléchir encore pour la suite de la fonction
 
         return paye;
     }
 
     @Override
-    public String ConsulterFacture(String idFacture) throws RemoteException {
-        String dataFacture = null;
+    public String[] ConsulterFacture(String idFacture) throws RemoteException {
+        String[] dataFacture = new String[64];
+        int i =0;
         try {
-            dataFacture = null;
             Scanner readerFacture = new Scanner(new File(idFacture));
             while (readerFacture.hasNextLine()) {
-                dataFacture = readerFacture.nextLine();
+                dataFacture[i] = readerFacture.nextLine();
+                i++;
             }
             readerFacture.close();
         } catch (IOException e) {

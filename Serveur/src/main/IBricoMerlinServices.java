@@ -27,7 +27,7 @@ public interface IBricoMerlinServices extends Remote {
    String[] PayerFacture(String idFacture) throws IOException;
 
    //Récupère les informations de la facture (ticket de caisse) demandée.
-   String ConsulterFacture(String idFacture) throws RemoteException;
+   String[] ConsulterFacture(String idFacture) throws RemoteException;
 
    //Calcule le chiffre d’affaire à une date donnée en fonction des factures de cette date.
    void CalculerCA(String date) throws RemoteException;

@@ -112,10 +112,13 @@ public class Client extends JFrame {
 
     private void acheterArticle() {
         try {
-            String ref = JOptionPane.showInputDialog(this, "Référence de l'article :");
-            int qte = Integer.parseInt(JOptionPane.showInputDialog(this, "Quantité à acheter :"));
-            stub.AcheterArticle(ref, qte);
-            JOptionPane.showMessageDialog(this, " Achat effectué avec succès.");
+            while(JOptionPane.showInputDialog(this,"Fin ? ").equals(false)) {
+                String ref = JOptionPane.showInputDialog(this, "Référence de l'article :").concat(",");
+                System.out.println(ref);
+                int qte = Integer.parseInt(JOptionPane.showInputDialog(this, "Quantité à acheter :"));
+                JOptionPane.showMessageDialog(this, " Achat effectué avec succès.");
+            }
+           // stub.AcheterArticle(ref, qte);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
         }
@@ -149,7 +152,7 @@ public class Client extends JFrame {
     private void consulterFacture() {
         String id = JOptionPane.showInputDialog(this, "ID de la facture :");
         try {
-            String facture = stub.ConsulterFacture(id);
+            String facture = Arrays.toString(stub.ConsulterFacture(id));
             JOptionPane.showMessageDialog(this, facture != null ? facture : " Facture non trouvée.");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
