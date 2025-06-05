@@ -15,7 +15,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         super();
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(url, "root","root");
+            con = DriverManager.getConnection(url, "root","");
         } catch (SQLException s){
             s.printStackTrace();
         } catch (ClassNotFoundException e) {

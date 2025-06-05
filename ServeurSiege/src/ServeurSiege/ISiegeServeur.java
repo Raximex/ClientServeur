@@ -1,4 +1,4 @@
-
+package ServeurSiege;
 
 import java.io.IOException;
 import java.rmi.Remote;
@@ -11,5 +11,5 @@ public interface ISiegeServeur extends Remote {
 
 
    //mise a jour des prix des références envoyés aux serveurs.
-   HashMap<String,Float> miseAJourPrix(String[] refArticles) throws RemoteException, SQLException;
+   HashMap<String,Float> miseAJourPrix() throws RemoteException, SQLException;
 }
