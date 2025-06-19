@@ -2,6 +2,7 @@ package Serveur;
 
 import ServeurSiege.ISiegeServeur;
 
+import java.io.*;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -26,12 +27,34 @@ public class Server {
 
 
         MiseAjourPrix();// mise à jour du prix lors du lancement du serveur
+        sendFactures();//envoie test
     }
-
-
 
     public void MiseAjourPrix() throws RemoteException, SQLException {
         BricoMerlinServicesImpl.MiseAJourServeur(stub.miseAJourPrix());
+    }
+
+    public void sendFactures() throws RemoteException {
+        File folder = new File("Serveur/Factures");
+        File[] files = folder.listFiles();
+
+        if (files != null && files.length > 0) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    byte[] data = new byte[(int) file.length()];
+                    try {
+                        FileInputStream in = new FileInputStream(file);
+                        in.read(data);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    stub.getFactures(file.getName(), data);
+                    System.out.println("Fichier envoyé : " + file.getName());
+                }
+            }
+        } else {
+            System.out.println("Aucun fichier trouvé dans le dossier 'factures'.");
+        }
     }
 
     public static void main(String[] args) throws SQLException, RemoteException {
@@ -55,12 +78,12 @@ public class Server {
         }
         Server server = new Server();
 
-
-        scheduleDailyTask(7, 0,server); // Heure = 7h00
-
+        scheduleDailyTask(7, 0, server, true); // Heure = 7h00
+        scheduleDailyTask(23, 59, server, false);
     }
 
-    public static void scheduleDailyTask(int hour, int minute, Server server) {
+    //Si action = true => maj prix matin, si action = false => envoie factures soir.
+    public static void scheduleDailyTask(int hour, int minute, Server server, boolean action) {
         Timer timer = new Timer();
 
         // Définir la première exécution à demain 7h00 si l'heure est déjà passée
@@ -79,15 +102,23 @@ public class Server {
 
         long period = 24 * 60 * 60 * 1000; // 24 heures en millisecondes
 
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    server.MiseAjourPrix();
-                } catch (RemoteException | SQLException e) {
-                    throw new RuntimeException(e);
+            timer.scheduleAtFixedRate( new TimerTask() {
+                @Override
+                public void run() {
+                    if (action == true) {
+                        try {
+                            server.MiseAjourPrix();
+                        } catch (RemoteException | SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        try {
+                            server.sendFactures();
+                        } catch (RemoteException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                 }
-            }
-        }, firstRun, period);
+            }, firstRun, period);
+        }
     }
-}
