@@ -12,4 +12,5 @@ public interface ISiegeServeur extends Remote {
 
    //mise a jour des prix des références envoyés aux serveurs.
    HashMap<String,Float> miseAJourPrix() throws RemoteException, SQLException;
+
 }

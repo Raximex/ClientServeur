@@ -108,7 +108,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
             // Génération de la facture
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
             String nomFacture = "facture_" + timeStamp;
-            try (FileWriter writerFacture = new FileWriter(nomFacture)) {
+            try (FileWriter writerFacture = new FileWriter("Serveur/Factures/" + nomFacture)) {
                 writerFacture.write("Facture du " + timeStamp + "\n");
 
                 float montantTotal = 0;
@@ -192,7 +192,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
     @Override
     public String[] PayerFacture(String idFacture) throws IOException, SQLException {
         String[] facture = new String[256];
-        File file = new File(idFacture);
+        File file = new File("Serveur/Factures" + idFacture);
         Scanner reader = new Scanner(file);
         int i = 0;
 
@@ -215,7 +215,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         String[] dataFacture = new String[64];
         int i =0;
         try {
-            Scanner readerFacture = new Scanner(new File(idFacture));
+            Scanner readerFacture = new Scanner(new File("Serveur/Factures" + idFacture));
             while (readerFacture.hasNextLine()) {
                 dataFacture[i] = readerFacture.nextLine();
                 i++;
@@ -243,5 +243,15 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
             }
         }
         return ca;
+    }
+
+    public static void MiseAJourServeur(HashMap<String,Float> map) throws RemoteException, SQLException {
+        for(Object key : map.keySet()) {
+            System.out.println(key + " : " + map.get(key));
+            String requete = "UPDATE article SET prix_unitaire = '" + map.get(key) +"' WHERE reference_ID = '" + key + "';";
+            PreparedStatement requeteStatementMaj = con.prepareStatement(requete);
+            requeteStatementMaj.executeUpdate(requete);
+            requeteStatementMaj.close();
+        }
     }
 }

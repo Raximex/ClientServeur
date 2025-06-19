@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashMap;
 
 // Créer l'interface de l'objet distant
 public interface IBricoMerlinServices extends Remote {  
