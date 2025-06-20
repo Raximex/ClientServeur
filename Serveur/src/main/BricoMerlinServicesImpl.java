@@ -4,9 +4,11 @@ import java.rmi.RemoteException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Date;
 
-
+/**
+ * Classe implémentant les méthode de l'interface IBricoMerlinServices.
+ * Cette classe possède les méthodes du serveur.
+ */
 public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
     private static String url = "jdbc:mysql://localhost:3306/GestionArticles";
@@ -15,24 +17,21 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         super();
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(url, "root","root");
+            con = DriverManager.getConnection(url, "root","");
         } catch (SQLException s){
             s.printStackTrace();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-       /* finally { //A voir si ca doit rester ca
-
-            if (con != null) {
-                try {
-                    con.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        }*/
     }
 
+    /**
+     * Permet de consulter un article grâce a sa référence.
+     * @param refArticle référence de l'article
+     * @return un tableau de String qui permet d'effectuer l'affichage des détails de l'article.
+     * @throws RemoteException
+     * @throws SQLException
+     */
     @Override
     public String[] ConsulterArticle(String refArticle) throws RemoteException, SQLException {
         String requete = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID ='" + refArticle + "';";
@@ -52,6 +51,13 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         return resultatRenvoye;
     }
 
+    /**
+     * Fonction permettant de consulter tous les articles en donnant une famille d'article.
+     * @param familleArticle
+     * @return
+     * @throws RemoteException
+     * @throws SQLException
+     */
     @Override
     public String[] ConsulterFamille(String familleArticle) throws RemoteException, SQLException {
         String requete = "SELECT reference_ID, famille_article, prix_unitaire, nb_total " +
@@ -77,7 +83,14 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         return resultatRenvoye;
     }
 
-
+    /**
+     * Permet d'acheter un article ou plusieurs.
+     * @param refArticle
+     * @param qte
+     * @param paye
+     * @throws RemoteException
+     * @throws SQLException
+     */
     @Override
     public void AcheterArticle(String refArticle, int[] qte, boolean paye) throws RemoteException, SQLException {
         String requeteRecupArticle = "SELECT reference_ID, prix_unitaire, nb_total FROM Article WHERE reference_ID IN (" + refArticle + ")";
@@ -115,9 +128,6 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
                 for (int i = 0; i < lignesArticles.size(); i++) {
                     String[] ligne = lignesArticles.get(i);
                     for (int j = 0; j < nbCols; j++) {
-                      /* if(Objects.equals(rsmd.getColumnLabel(j), "nb_total")){
-                            continue;
-                       }*/
                         writerFacture.write(rsmd.getColumnLabel(j + 1) + " : " + ligne[j] + "\n");
                     }
                     writerFacture.write("Quantité : " + qte[i] + "\n");
@@ -159,7 +169,13 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         }
     }
 
-
+    /**
+     * Permet d'ajouter du stock a un article.
+     * @param refArticle référence de l'article.
+     * @param qte qte a mettre à jour dans la base
+     * @throws RemoteException
+     * @throws SQLException
+     */
     @Override
     public void AjouterStockArticle(String refArticle, int qte) throws RemoteException, SQLException {
     String requeteRecupArticle = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID ='" + refArticle +"';";
@@ -189,6 +205,13 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         requeteStatement.close(); // fin de requete
     }
 
+    /**
+     * Permet de payer une facture.
+     * @param idFacture
+     * @return
+     * @throws IOException
+     * @throws SQLException
+     */
     @Override
     public String[] PayerFacture(String idFacture) throws IOException, SQLException {
         String[] facture = new String[256];
@@ -204,12 +227,18 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
         String requeteMajFacture = "UPDATE Facture SET paye = 1 WHERE facture_ID = '" + idFacture + "';";
         PreparedStatement requeteStatementMaj = con.prepareStatement(requeteMajFacture);
-        int resultatUpdate = requeteStatementMaj.executeUpdate(requeteMajFacture);
+        requeteStatementMaj.executeUpdate(requeteMajFacture);
         requeteStatementMaj.close();
 
         return facture;
     }
 
+    /**
+     * Permet de consulter une facture, il faut passer en paramètres un id de facture pour que celui soit lu.
+     * @param idFacture
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public String[] ConsulterFacture(String idFacture) throws RemoteException {
         String[] dataFacture = new String[64];
@@ -227,11 +256,17 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         return dataFacture;
     }
 
+    /**
+     * Calcule le chiffre d'affaire de la journée choisi.
+     * @param date
+     * @return
+     * @throws RemoteException
+     * @throws SQLException
+     */
     @Override
     public float CalculerCA(String date) throws RemoteException, SQLException {
         String requeteRecupeFactureJournee = "SELECT montant FROM Facture WHERE date_facture = '" + date + "' AND paye = 1;";
         PreparedStatement requeteStatement = con.prepareStatement(requeteRecupeFactureJournee);
-        String[] resultatRenvoye = new String[64];
         ResultSet resultats = requeteStatement.executeQuery(requeteRecupeFactureJournee);
         ResultSetMetaData rsmd = resultats.getMetaData();
         int nCols = rsmd.getColumnCount();
@@ -245,6 +280,12 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         return ca;
     }
 
+    /**
+     * Permet de mettre à jour les prix du serveur.
+     * @param map Hashmap clé valeur avec une référence d'article et un prix.
+     * @throws RemoteException
+     * @throws SQLException
+     */
     public static void MiseAJourServeur(HashMap<String,Float> map) throws RemoteException, SQLException {
         for(Object key : map.keySet()) {
             System.out.println(key + " : " + map.get(key));

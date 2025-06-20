@@ -5,7 +5,10 @@ import java.rmi.RemoteException;
 import java.sql.*;
 import java.util.*;
 
-
+/**
+ * Implémentation des méthodes de l'interface ISiegeServeur.
+ * Ces méthodes font référence aux fonctions du serveur Siege.
+ */
 public class  ISiegeServeurImpl implements ISiegeServeur{
 
     private static String url = "jdbc:mysql://localhost:3306/articlessiege";
@@ -14,7 +17,7 @@ public class  ISiegeServeurImpl implements ISiegeServeur{
         super();
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(url, "root", "root");
+            con = DriverManager.getConnection(url, "root", "");
         } catch (SQLException s) {
             s.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -22,6 +25,12 @@ public class  ISiegeServeurImpl implements ISiegeServeur{
         }
     }
 
+    /**
+     * Met a jour les prix dans la base de données du serveur Siege.
+     * @return
+     * @throws RemoteException
+     * @throws SQLException
+     */
     @Override
     public HashMap<String, Float> miseAJourPrix() throws RemoteException, SQLException {
         HashMap<String, Float> map = new HashMap<>();
@@ -41,6 +50,12 @@ public class  ISiegeServeurImpl implements ISiegeServeur{
         return map;
     }
 
+    /**
+     * Fonction permettant de récupérer les fichiers envoyés par le serveur.
+     * @param filename nom du fichier (facture)
+     * @param data data passé en paramètre (in).
+     * @throws RemoteException
+     */
     @Override
     public void getFactures(String filename, byte[] data) throws RemoteException {
         try {

@@ -11,9 +11,11 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Timer;
-import java.util.HashMap;
 import java.util.TimerTask;
 
+/**
+ * Serveur du magasin.
+ */
 public class Server {
     private ISiegeServeur stub;
     public Server() throws RemoteException, SQLException {
@@ -30,10 +32,22 @@ public class Server {
         sendFactures();//envoie test
     }
 
+
+    /**
+     * Met a jour les prix du serveur en appelant une fonction du serveur Siege.
+     * MiseAJourServeur est la fonction qui met à jour la base du serveur.
+     * stub.MiseAJourPrix est la fonction qui renvoi une hashmap clé valeur contenant les nouveaux prix des articles.
+     * @throws RemoteException
+     * @throws SQLException
+     */
     public void MiseAjourPrix() throws RemoteException, SQLException {
         BricoMerlinServicesImpl.MiseAJourServeur(stub.miseAJourPrix());
     }
 
+    /**
+     * Envoi les factures au serveur Siege.
+     * @throws RemoteException
+     */
     public void sendFactures() throws RemoteException {
         File folder = new File("Serveur/Factures");
         File[] files = folder.listFiles();
@@ -82,6 +96,13 @@ public class Server {
         scheduleDailyTask(23, 59, server, false);
     }
 
+    /**
+     * Permet d'appeler certains fonctions a un temps donné
+     * @param hour
+     * @param minute
+     * @param server
+     * @param action sert a savoir si on veut appeler la fonction pour la mise a jour des prix ou l'envoi des factures (ces deux actions sont faites a des temps T différends).
+     */
     //Si action = true => maj prix matin, si action = false => envoie factures soir.
     public static void scheduleDailyTask(int hour, int minute, Server server, boolean action) {
         Timer timer = new Timer();
