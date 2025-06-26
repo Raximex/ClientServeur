@@ -77,36 +77,87 @@ public class Client extends JFrame {
         buttons[6].addActionListener(e -> calculerCA());
         buttons[7].addActionListener(e -> System.exit(0));
     }
+
     private void consulterArticle() {
-        String ref = JOptionPane.showInputDialog(this, "Entrer la référence de l'article :");
         try {
-            String[] article = stub.ConsulterArticle(ref);
-            if (article != null && article[1] != null) {
-                JOptionPane.showMessageDialog(this, String.format("\u2705 Référence : %s\n\uD83D\uDCC4 Famille : %s\n\uD83D\uDCB2 Prix : %s €\n📦 Stock : %s",
-                        article[1], article[2], article[3], article[4]));
-            } else {
-                JOptionPane.showMessageDialog(this, " Article non trouvé.");
+            List<String> listeRefs = stub.getArticles();  // Méthode qui retourne toutes les refs
+            if (listeRefs == null || listeRefs.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "❌ Aucun article trouvé.");
+                return;
             }
+
+            String ref = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Sélectionnez une référence d'article :",
+                    "Consultation d'article",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    listeRefs.toArray(),
+                    listeRefs.get(0));
+
+            List<String> article = stub.ConsulterArticle(ref);
+            if (article != null && article.size() >= 4) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Fiche article\n\n");
+                sb.append("——————————————————————————\n");
+                sb.append("Référence       : \t").append(article.get(0)).append("\n");
+                sb.append("Famille         : \t").append(article.get(1)).append("\n");
+                sb.append("Prix unitaire   : \t").append(article.get(2)).append(" €\n");
+                sb.append("Stock disponible: \t").append(article.get(3)).append("\n");
+
+                JOptionPane.showMessageDialog(this, sb.toString(), "Détails de l'article", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "❌ Article non trouvé.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "❗ Erreur lors de la consultation : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }
 
     private void consulterFamille() {
-        String nom = JOptionPane.showInputDialog(this, "Nom de la famille d'articles :");
         try {
-            String[] articles = stub.ConsulterFamille(nom);
-            if (articles != null && articles.length > 1) {
-                StringBuilder sb = new StringBuilder(" Articles dans la famille :\n\n");
-                for (String s : articles) {
-                    if (s != null) sb.append(s).append("\n");
-                }
-                JOptionPane.showMessageDialog(this, sb.toString());
-            } else {
-                JOptionPane.showMessageDialog(this, " Aucun article trouvé pour cette famille.");
+            List<String> famillesList = stub.getFamilles();
+            if (famillesList == null || famillesList.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "❌ Aucune famille d'articles trouvée.");
+                return;
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+
+            String nom = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Sélectionnez une famille d'articles :",
+                    "Choix de la famille",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    famillesList.toArray(),
+                    famillesList.get(0));
+
+            List<String> articles = stub.ConsulterFamille(nom);
+            if (articles != null && !articles.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Articles de la famille « ").append(nom).append(" »\n");
+                sb.append("——————————————————————————\n");
+
+                for (int i = 0; i < articles.size(); i += 4) {
+                    String ref = articles.get(i);
+                    String famille = articles.get(i + 1);
+                    String prix = articles.get(i + 2);
+                    String stock = articles.get(i + 3);
+
+                    sb.append(String.format("Réf: %-8s | Prix: %-6s € | Stock: %-4s\n", ref, prix, stock));
+                }
+
+                JTextArea area = new JTextArea(sb.toString(), 15, 50);
+                area.setEditable(false);
+                area.setFont(new Font("Monospaced", Font.PLAIN, 12));
+                JOptionPane.showMessageDialog(this, new JScrollPane(area), "Articles de la famille", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "❌ Aucun article trouvé pour la famille \"" + nom + "\".");
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "❗ Erreur : " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

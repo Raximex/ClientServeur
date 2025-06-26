@@ -11,10 +11,10 @@ import java.util.Map;
 public interface IBricoMerlinServices extends Remote {  
    //#region Article
    //Récupère les informations de l'article en passant sa référence article.
-   String[] ConsulterArticle(String refArticle) throws RemoteException, SQLException;
+   List<String> ConsulterArticle(String refArticle) throws RemoteException, SQLException;
 
    //Récupère la liste d'article en fonction de sa famille. Seul les articles avec un stock > 0 sont récupérés.
-   String[] ConsulterFamille(String familleArticle) throws RemoteException, SQLException;
+   List<String> ConsulterFamille(String familleArticle) throws RemoteException, SQLException;
 
    //Ajoute l'article demandé à la facture et retire du stock la quantité demandée.
    void AcheterArticle(List<String> refArticle, List<Integer> qte, boolean paye) throws RemoteException, SQLException;
@@ -24,6 +24,13 @@ public interface IBricoMerlinServices extends Remote {
 
    //Récupère la liste des articles et leur stock
    Map<String, Integer> getArticlesAvecStock() throws RemoteException, SQLException;
+
+   //Récupère la liste des articles
+   List<String> getArticles() throws RemoteException, SQLException;
+
+   //Récupère la liste des familles
+   List<String> getFamilles() throws RemoteException, SQLException;
+
    //#endregion
 
    //#region Facture

@@ -33,22 +33,25 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
      * @throws SQLException
      */
     @Override
-    public String[] ConsulterArticle(String refArticle) throws RemoteException, SQLException {
-        String requete = "Select reference_ID, famille_article, prix_unitaire, nb_total from Article where reference_ID ='" + refArticle + "';";
-        PreparedStatement requeteStatement = con.prepareStatement(requete);
-        String[] resultatRenvoye = new String[5];
-        ResultSet resultats = requeteStatement.executeQuery(requete);
-        ResultSetMetaData rsmd = resultats.getMetaData();
-        int nbCols = rsmd.getColumnCount();
-        boolean encore = resultats.next();
+    public List<String> ConsulterArticle(String refArticle) throws RemoteException, SQLException {
+        List<String> resultat = new ArrayList<>();
 
-        while (encore) {
-            for (int i = 1; i <= nbCols; i++)
-                resultatRenvoye[i] = resultats.getString(i);
+        String requete = "SELECT reference_ID, nom_famille, prix_unitaire, nb_total " +
+                "FROM Article, Famille " +
+                "WHERE Article.famille_article = Famille.id_famille AND reference_ID = ?";
 
-            encore = resultats.next();
+        try (PreparedStatement stmt = con.prepareStatement(requete)) {
+            stmt.setString(1, refArticle);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    resultat.add(rs.getString("reference_ID"));
+                    resultat.add(rs.getString("nom_famille"));
+                    resultat.add(rs.getString("prix_unitaire"));
+                    resultat.add(rs.getString("nb_total"));
+                }
+            }
         }
-        return resultatRenvoye;
+        return resultat;
     }
 
     /**
@@ -59,28 +62,26 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
      * @throws SQLException
      */
     @Override
-    public String[] ConsulterFamille(String familleArticle) throws RemoteException, SQLException {
+    public List<String> ConsulterFamille(String familleArticle) throws RemoteException, SQLException {
+        List<String> resultat = new ArrayList<>();
+
         String requete = "SELECT reference_ID, famille_article, prix_unitaire, nb_total " +
                 "FROM Article, Famille " +
-                "WHERE Famille.id_famille = Article.famille_article AND nom_famille = '" + familleArticle + "';";
-        PreparedStatement requeteStatement = con.prepareStatement(requete);
+                "WHERE Famille.id_famille = Article.famille_article AND nom_famille = ?";
 
-        String[] resultatRenvoye = new String[64];
-        ResultSet resultats = requeteStatement.executeQuery(requete);
-        ResultSetMetaData rsmd = resultats.getMetaData();
-        int nbCols = rsmd.getColumnCount();
-
-        int index = 1;  // pour remplir le tableau à plat
-
-        while (resultats.next()) {
-            for (int col = 1; col <= nbCols; col++) {
-                resultatRenvoye[index] = resultats.getString(col);
-                index++;
+        try (PreparedStatement stmt = con.prepareStatement(requete)) {
+            stmt.setString(1, familleArticle);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    resultat.add(rs.getString("reference_ID"));
+                    resultat.add(rs.getString("famille_article"));
+                    resultat.add(rs.getString("prix_unitaire"));
+                    resultat.add(rs.getString("nb_total"));
+                }
             }
         }
 
-        requeteStatement.close();
-        return resultatRenvoye;
+        return resultat;
     }
 
     /**
@@ -221,6 +222,34 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
             }
         }
         return stockMap;
+    }
+
+    @Override
+    public List<String> getArticles() throws RemoteException, SQLException {
+        List<String> refs = new ArrayList<>();
+        String sql = "SELECT reference_ID FROM Article";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet resultats = stmt.executeQuery()) {
+            while (resultats.next()) {
+                refs.add(resultats.getString("reference_ID"));
+            }
+        }
+        return refs;
+    }
+
+    @Override
+    public List<String> getFamilles() throws RemoteException, SQLException {
+        List<String> refs = new ArrayList<>();
+        String sql = "SELECT nom_famille FROM Famille";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet resultats = stmt.executeQuery()) {
+            while (resultats.next()) {
+                refs.add(resultats.getString("nom_famille"));
+            }
+        }
+        return refs;
     }
 
     /**
