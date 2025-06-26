@@ -260,24 +260,27 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
      * @throws SQLException
      */
     @Override
-    public String[] PayerFacture(String idFacture) throws IOException, SQLException {
-        String[] facture = new String[256];
-        File file = new File("Serveur/Factures" + idFacture);
-        Scanner reader = new Scanner(file);
-        int i = 0;
+    public void PayerFacture(String idFacture) throws IOException, SQLException {
+//        List<String> lignesFacture = new ArrayList<>();
+//        File fichier = new File("Serveur/Factures/" + idFacture); // Corrigé le chemin manquant "/"
+//
+//        if (!fichier.exists()) {
+//            throw new FileNotFoundException("La facture n'existe pas.");
+//        }
+//
+//        try (Scanner scanner = new Scanner(fichier)) {
+//            while (scanner.hasNextLine()) {
+//                lignesFacture.add(scanner.nextLine());
+//            }
+//        }
 
-        while(reader.hasNextLine()) {
-            facture[i] = reader.nextLine();
-            i++;
+        String requeteMajFacture = "UPDATE Facture SET paye = 1 WHERE facture_ID = ?";
+        try (PreparedStatement stmt = con.prepareStatement(requeteMajFacture)) {
+            stmt.setString(1, idFacture);
+            stmt.executeUpdate();
         }
-        reader.close();// a réfléchir encore pour la suite de la fonction
 
-        String requeteMajFacture = "UPDATE Facture SET paye = 1 WHERE facture_ID = '" + idFacture + "';";
-        PreparedStatement requeteStatementMaj = con.prepareStatement(requeteMajFacture);
-        requeteStatementMaj.executeUpdate(requeteMajFacture);
-        requeteStatementMaj.close();
-
-        return facture;
+//        return lignesFacture;
     }
 
     /**
@@ -287,14 +290,13 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
      * @throws RemoteException
      */
     @Override
-    public String[] ConsulterFacture(String idFacture) throws RemoteException {
-        String[] dataFacture = new String[64];
-        int i =0;
+    public List<String> ConsulterFacture(String idFacture) throws RemoteException {
+        List<String> dataFacture = new ArrayList<>();
         try {
-            Scanner readerFacture = new Scanner(new File("Serveur/Factures" + idFacture));
+            Scanner readerFacture = new Scanner(new File("Serveur/Factures/" + idFacture));
+            System.out.println(readerFacture.nextLine());
             while (readerFacture.hasNextLine()) {
-                dataFacture[i] = readerFacture.nextLine();
-                i++;
+                dataFacture.add(readerFacture.nextLine());
             }
             readerFacture.close();
         } catch (IOException e) {
@@ -341,5 +343,33 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
             requeteStatementMaj.executeUpdate(requete);
             requeteStatementMaj.close();
         }
+    }
+
+    @Override
+    public List<String> getFacturesNonPayees() throws RemoteException, SQLException {
+        List<String> factures = new ArrayList<>();
+        String sql = "SELECT facture_ID FROM Facture WHERE paye = 0";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet resultats = stmt.executeQuery()) {
+            while (resultats.next()) {
+                factures.add(resultats.getString("facture_ID"));
+            }
+        }
+        return factures;
+    }
+
+    @Override
+    public List<String> getFactures() throws RemoteException, SQLException {
+        List<String> factures = new ArrayList<>();
+        String sql = "SELECT facture_ID FROM Facture";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet resultats = stmt.executeQuery()) {
+            while (resultats.next()) {
+                factures.add(resultats.getString("facture_ID"));
+            }
+        }
+        return factures;
     }
 }

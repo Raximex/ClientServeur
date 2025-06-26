@@ -220,41 +220,107 @@ public class Client extends JFrame {
         }
     }
 
-
-
     private void ajouterStock() {
         try {
-            String ref = JOptionPane.showInputDialog(this, "Référence de l'article :");
-            int qte = Integer.parseInt(JOptionPane.showInputDialog(this, "Quantité à ajouter :"));
+            List<String> refs = stub.getArticles();
+            if (refs == null || refs.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "❌ Aucun article disponible.");
+                return;
+            }
+
+            String ref = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Sélectionnez l'article à mettre à jour :",
+                    "Ajout de stock",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    refs.toArray(),
+                    refs.get(0)
+            );
+
+            if (ref == null) return;
+
+            String qteStr = JOptionPane.showInputDialog(this, "Quantité à ajouter :");
+            if (qteStr == null) return;
+
+            int qte = Integer.parseInt(qteStr);
+            if (qte <= 0) {
+                JOptionPane.showMessageDialog(this, "❗ La quantité doit être positive.");
+                return;
+            }
+
             stub.AjouterStockArticle(ref, qte);
-            JOptionPane.showMessageDialog(this, " Stock ajouté avec succès.");
+            JOptionPane.showMessageDialog(this, "✅ Stock ajouté avec succès.");
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "❌ Quantité invalide.");
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "❌ Erreur : " + ex.getMessage());
+            ex.printStackTrace();
         }
     }
 
     private void payerFacture() {
-        String id = JOptionPane.showInputDialog(this, "ID de la facture à payer :");
         try {
-            String[] facture = stub.PayerFacture(id);
-            StringBuilder sb = new StringBuilder(" Votre facture :\n\n");
-            for(String s : facture) {
-                if (s != null) sb.append(s).append("\n");
+            List<String> facturesNonPayees = stub.getFacturesNonPayees();
+            if (facturesNonPayees == null || facturesNonPayees.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Aucune facture à payer.");
+                return;
             }
-            JOptionPane.showMessageDialog(this, sb.toString());
-            JOptionPane.showMessageDialog(this, "Facture payée avec succès");
+
+            String id = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Sélectionnez l'ID de la facture à payer :",
+                    "Paiement de facture",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    facturesNonPayees.toArray(),
+                    facturesNonPayees.get(0)
+            );
+            if (id == null) return;
+
+            stub.PayerFacture(id);
+            JOptionPane.showMessageDialog(this, "✅ Facture payée avec succès.");
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "❌ Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }
 
     private void consulterFacture() {
-        String id = JOptionPane.showInputDialog(this, "ID de la facture :");
         try {
-            String facture = Arrays.toString(stub.ConsulterFacture(id));
-            JOptionPane.showMessageDialog(this, facture != null ? facture : " Facture non trouvée.");
+            List<String> listeFactures = stub.getFactures();
+            if (listeFactures == null || listeFactures.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "❌ Aucune facture trouvée.");
+                return;
+            }
+
+            String id = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Sélectionnez une facture à consulter :",
+                    "Consultation de facture",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    listeFactures.toArray(),
+                    listeFactures.get(0)
+            );
+            if (id == null) return;
+
+            List<String> contenu = stub.ConsulterFacture(id);
+            if (contenu == null || contenu.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "❌ Facture introuvable ou vide.");
+                return;
+            }
+
+            StringBuilder sb = new StringBuilder("Facture ").append(id).append(" :\n\n");
+            for (String ligne : contenu) {
+                if (ligne != null && !ligne.trim().isEmpty()) {
+                    sb.append(ligne).append("\n");
+                }
+            }
+            JOptionPane.showMessageDialog(this, sb.toString(), "Détail de la facture", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "❗ Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }
 

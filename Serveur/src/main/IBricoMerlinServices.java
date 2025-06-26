@@ -35,13 +35,16 @@ public interface IBricoMerlinServices extends Remote {
 
    //#region Facture
    //Permet à un client de payer sa facture.
-   String[] PayerFacture(String idFacture) throws IOException, SQLException;
+   void PayerFacture(String idFacture) throws IOException, SQLException;
 
    //Récupère les informations de la facture (ticket de caisse) demandée.
-   String[] ConsulterFacture(String idFacture) throws RemoteException;
+   List<String> ConsulterFacture(String idFacture) throws RemoteException;
 
    //Calcule le chiffre d’affaire à une date donnée en fonction des factures de cette date.
    float CalculerCA(String date) throws RemoteException, SQLException;
 
+   List<String> getFacturesNonPayees() throws RemoteException, SQLException;
+
+   List<String> getFactures() throws RemoteException, SQLException;
    //#endregion
 }
