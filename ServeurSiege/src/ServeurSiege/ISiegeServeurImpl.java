@@ -25,44 +25,35 @@ public class  ISiegeServeurImpl implements ISiegeServeur{
         }
     }
 
-    /**
-     * Met a jour les prix dans la base de données du serveur Siege.
-     * @return HashMap<String, Float>
-     * @throws RemoteException
-     * @throws SQLException
-     */
     @Override
     public HashMap<String, Float> miseAJourPrix() throws RemoteException, SQLException {
         HashMap<String, Float> map = new HashMap<>();
 
-        String requeteMajPrix = "SELECT ref_article, prix FROM article";
+        // Requête pour récupérer toutes les références articles avec leur prix actuel
+        String requeteMajPrix = "SELECT ref_article, prix FROM Article";
 
-        PreparedStatement requeteStatement = con.prepareStatement(requeteMajPrix);
-        ResultSet resultats = requeteStatement.executeQuery();
+        try (PreparedStatement requeteStatement = con.prepareStatement(requeteMajPrix);
+             ResultSet resultats = requeteStatement.executeQuery()) {
 
-        while (resultats.next()) {
-            String reference = resultats.getString("ref_article");
-            float prix = resultats.getFloat("prix");
-            map.put(reference, prix);
-            System.out.println(reference + " → " + prix);
+            while (resultats.next()) {
+                String reference = resultats.getString("ref_article");
+                float prix = resultats.getFloat("prix");
+                map.put(reference, prix);
+
+                // Log pour vérification côté siège
+                System.out.println(reference + " → " + prix);
+            }
         }
 
         return map;
     }
 
-    /**
-     * Fonction permettant de récupérer les fichiers envoyés par le serveur.
-     * @param filename nom du fichier (facture)
-     * @param data data passé en paramètre (in).
-     * @throws RemoteException
-     */
     @Override
     public void getFactures(String filename, byte[] data) throws RemoteException {
-        try {
-            FileOutputStream out = new FileOutputStream("ServeurSiege/Factures/" + filename);
-                out.write(data);
-                System.out.println("Fichier recu : " + filename);
-        }catch (IOException e) {
+        try (FileOutputStream out = new FileOutputStream("ServeurSiege/Factures/" + filename)) {
+            out.write(data);
+            System.out.println("Fichier reçu : " + filename);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

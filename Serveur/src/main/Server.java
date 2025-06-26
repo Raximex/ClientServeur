@@ -20,8 +20,8 @@ import java.util.TimerTask;
 public class Server {
     private ISiegeServeur stub;
     /**
-     * Constructeur du serveur.
-     * Établit la connexion RMI avec le SiegeServeur et initialise les mises à jour nécessaires.
+     * Constructeur du serveur magasin.
+     * Établit la connexion RMI avec le SiegeServeur et lance la mise à jour des prix au lancement.
      *
      * @throws RemoteException si la connexion RMI échoue
      * @throws SQLException si une erreur SQL survient lors de la mise à jour des prix
@@ -41,7 +41,7 @@ public class Server {
 
     /**
      * Met à jour les prix du serveur en appelant une fonction du serveur Siege.
-     * MiseAJourServeur est la fonction qui met à jour la base du serveur. stub.
+     * MiseAJourServeur est la fonction qui met à jour la base du serveur.
      * MiseAJourPrix est la fonction qui renvoi une hashmap clé valeur contenant les nouveaux prix des articles.
      * @throws RemoteException
      * @throws SQLException
@@ -79,11 +79,11 @@ public class Server {
     }
 
     /**
-     * Permet d'appeler certains fonctions a un temps donné
+     * Permet d'appeler certaines fonctions à un temps donné
      * @param hour
      * @param minute
      * @param server
-     * @param action sert a savoir si on veut appeler la fonction pour la mise a jour des prix ou l'envoi des factures (ces deux actions sont faites a des temps T différends).
+     * @param action sert à savoir si on veut appeler la fonction pour la mise a jour des prix ou l'envoi des factures (ces deux actions sont faites a des temps T différends).
      */
     //Si action = true => maj prix matin, si action = false => envoie factures soir.
     public static void scheduleDailyTask(int hour, int minute, Server server, boolean action) {

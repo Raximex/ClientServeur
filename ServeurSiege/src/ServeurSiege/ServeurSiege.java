@@ -1,22 +1,35 @@
 package ServeurSiege;
 
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+/**
+ * Serveur RMI du siège.
+ */
 public class ServeurSiege {
-    public static void main(String[] args) {
-        try {
-            // Lancer le registre RMI
-            LocateRegistry.createRegistry(1100);
 
-            // Créer l'instance du service
+    /**
+     * Point d'entrée du serveur RMI siege de BricoMerlin.
+     * Initialise le registre RMI et enregistre le service du server siege.
+     *
+     * @param args arguments de la ligne de commande (non utilisés)
+     * @throws RemoteException en cas d'erreur RMI
+     */
+    public static void main(String[] args) throws RemoteException {
+        try {
+            // Lancer le registre RMI sur le port 1100
+            Registry registry = LocateRegistry.createRegistry(1100);
+
+            // Créer l'instance du service métier
             ISiegeServeurImpl siegeServeur = new ISiegeServeurImpl();
 
-            // Exporter l'objet et obtenir le stub
-            ISiegeServeur skeleton = (ISiegeServeur) UnicastRemoteObject.exportObject(siegeServeur, 0);
+            // Exporter l'objet en tant qu'objet distant
+            ISiegeServeur skeleton = (ISiegeServeur)
+                    UnicastRemoteObject.exportObject(siegeServeur, 0);
 
-            Registry registry = LocateRegistry.getRegistry(1100);
+            // Publier l’objet dans le registre RMI
             registry.rebind("SiegeServeur", skeleton);
 
             System.out.println("✅ Serveur RMI lancé avec succès !");
