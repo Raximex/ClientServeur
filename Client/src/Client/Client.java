@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -325,10 +326,29 @@ public class Client extends JFrame {
     }
 
     private void calculerCA() {
-        String date = JOptionPane.showInputDialog(this, "Entrer la date (yyyy-MM-dd) :");
+        JSpinner dateSpinner = new JSpinner(new SpinnerDateModel());
+        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
+
+        int option = JOptionPane.showOptionDialog(
+                this,
+                dateSpinner,
+                "Sélectionnez une date",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                null,
+                null
+        );
+
+        if (option != JOptionPane.OK_OPTION) return;
+
+        Date selectedDate = (Date) dateSpinner.getValue();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String date = sdf.format(selectedDate);
+
         try {
             float ca = stub.CalculerCA(date);
-            JOptionPane.showMessageDialog(this, " Chiffre d'affaires calculé pour " + date + " : " + ca);
+            JOptionPane.showMessageDialog(this, " Chiffre d'affaires calculé pour " + date + " : " + ca + "€");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
         }
