@@ -35,23 +35,19 @@ public class Server {
             // Rejette toute exception en tant que RemoteException pour uniformité côté client
             throw new RemoteException(e.getMessage());
         }
-
         // Mise à jour des prix au démarrage du serveur
-        MiseAjourPrix();
-
-        // sendFactures(); // Méthode de test (commentée)
+        miseAjourPrix();
     }
 
-
     /**
-     * Met a jour les prix du serveur en appelant une fonction du serveur Siege.
-     * MiseAJourServeur est la fonction qui met à jour la base du serveur.
-     * stub.MiseAJourPrix est la fonction qui renvoi une hashmap clé valeur contenant les nouveaux prix des articles.
+     * Met à jour les prix du serveur en appelant une fonction du serveur Siege.
+     * MiseAJourServeur est la fonction qui met à jour la base du serveur. stub.
+     * MiseAJourPrix est la fonction qui renvoi une hashmap clé valeur contenant les nouveaux prix des articles.
      * @throws RemoteException
      * @throws SQLException
      */
-    public void MiseAjourPrix() throws RemoteException, SQLException {
-        BricoMerlinServicesImpl.MiseAJourServeur(stub.miseAJourPrix());
+    public void miseAjourPrix() throws RemoteException, SQLException {
+        BricoMerlinServicesImpl.miseAJourServeur(stub.miseAJourPrix());
     }
 
     /**
@@ -114,7 +110,7 @@ public class Server {
                 public void run() {
                     if (action == true) {
                         try {
-                            server.MiseAjourPrix();
+                            server.miseAjourPrix();
                         } catch (RemoteException | SQLException e) {
                             throw new RuntimeException(e);
                         }

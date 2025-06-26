@@ -121,7 +121,7 @@ public class Client extends JFrame {
             if (ref == null) return;
 
             // Récupération des détails de l'article
-            List<String> article = stub.ConsulterArticle(ref);
+            List<String> article = stub.consulterArticle(ref);
             if (article != null && article.size() >= 4) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("Fiche article\n\n");
@@ -170,7 +170,7 @@ public class Client extends JFrame {
             if (nom == null) return;
 
             // Récupération des articles de la famille choisie
-            List<String> articles = stub.ConsulterFamille(nom);
+            List<String> articles = stub.consulterFamille(nom);
             if (articles != null && !articles.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("Articles de la famille « ").append(nom).append(" »\n");
@@ -274,7 +274,7 @@ public class Client extends JFrame {
                 int reponse = JOptionPane.showConfirmDialog(this, "Voulez-vous acheter d'autres articles ?", "Continuer", JOptionPane.YES_NO_OPTION);
                 if (reponse != JOptionPane.YES_OPTION) {
                     boolean payer = JOptionPane.showConfirmDialog(this, "Voulez-vous payer maintenant ?") == JOptionPane.YES_OPTION;
-                    stub.AcheterArticle(refs, qtes, payer);
+                    stub.acheterArticle(refs, qtes, payer);
                     continuer = false;
                 }
             }
@@ -323,7 +323,7 @@ public class Client extends JFrame {
             }
 
             // Mise à jour du stock côté serveur
-            stub.AjouterStockArticle(ref, qte);
+            stub.ajouterStockArticle(ref, qte);
             JOptionPane.showMessageDialog(this, "✅ Stock ajouté avec succès.");
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "❌ Quantité invalide.");
@@ -361,7 +361,7 @@ public class Client extends JFrame {
             if (id == null) return;
 
             // Paiement via le serveur
-            stub.PayerFacture(id);
+            stub.payerFacture(id);
             JOptionPane.showMessageDialog(this, "✅ Facture payée avec succès.");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "❌ Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
@@ -395,7 +395,7 @@ public class Client extends JFrame {
             if (id == null) return;
 
             // Récupération du contenu de la facture
-            List<String> contenu = stub.ConsulterFacture(id);
+            List<String> contenu = stub.consulterFacture(id);
             if (contenu == null || contenu.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "❌ Facture introuvable ou vide.");
                 return;
@@ -447,7 +447,7 @@ public class Client extends JFrame {
 
         try {
             // Appel distant pour le calcul du chiffre d'affaires
-            float ca = stub.CalculerCA(date);
+            float ca = stub.calculerCA(date);
             JOptionPane.showMessageDialog(this, " Chiffre d'affaires calculé pour " + date + " : " + ca + "€");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
