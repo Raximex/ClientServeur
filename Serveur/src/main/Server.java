@@ -8,6 +8,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Timer;
@@ -18,18 +19,27 @@ import java.util.TimerTask;
  */
 public class Server {
     private ISiegeServeur stub;
+    /**
+     * Constructeur du serveur.
+     * Établit la connexion RMI avec le SiegeServeur et initialise les mises à jour nécessaires.
+     *
+     * @throws RemoteException si la connexion RMI échoue
+     * @throws SQLException si une erreur SQL survient lors de la mise à jour des prix
+     */
     public Server() throws RemoteException, SQLException {
         try {
             Registry registry = LocateRegistry.getRegistry(1100);
             stub = (ISiegeServeur) registry.lookup("SiegeServeur");
             System.out.println("Connecté au SiegeServeur");
         } catch (Exception e) {
+            // Rejette toute exception en tant que RemoteException pour uniformité côté client
             throw new RemoteException(e.getMessage());
         }
 
+        // Mise à jour des prix au démarrage du serveur
+        MiseAjourPrix();
 
-        MiseAjourPrix();// mise à jour du prix lors du lancement du serveur
-        //sendFactures();//envoie test
+        // sendFactures(); // Méthode de test (commentée)
     }
 
 
@@ -45,55 +55,31 @@ public class Server {
     }
 
     /**
-     * Envoi les factures au serveur Siege.
+     * Envoi les factures de la journée au serveur Siege.
      * @throws RemoteException
      */
     public void sendFactures() throws RemoteException {
         File folder = new File("Serveur/Factures");
         File[] files = folder.listFiles();
 
+        String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
+
         if (files != null && files.length > 0) {
             for (File file : files) {
-                if (file.isFile()) {
-                    byte[] data = new byte[(int) file.length()];
-                    try {
-                        FileInputStream in = new FileInputStream(file);
+                if (file.isFile() && file.getName().contains("facture_" + date)) {
+                    try (FileInputStream in = new FileInputStream(file)) {
+                        byte[] data = new byte[(int) file.length()];
                         in.read(data);
+                        stub.getFactures(file.getName(), data);
+                        System.out.println("Fichier envoyé : " + file.getName());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    stub.getFactures(file.getName(), data);
-                    System.out.println("Fichier envoyé : " + file.getName());
                 }
             }
         } else {
-            System.out.println("Aucun fichier trouvé dans le dossier 'factures'.");
+            System.out.println("Aucun fichier trouvé dans le dossier 'Factures'.");
         }
-    }
-
-    public static void main(String[] args) throws SQLException, RemoteException {
-        try {
-            // Lancer le registre RMI
-            LocateRegistry.createRegistry(1099);
-
-            // Créer l'instance du service
-            BricoMerlinServicesImpl bricoMerlinServices = new BricoMerlinServicesImpl();
-
-            // Exporter l'objet et obtenir le stub
-            IBricoMerlinServices skeleton = (IBricoMerlinServices) UnicastRemoteObject.exportObject(bricoMerlinServices, 0);
-            //System.out.println("Enregistrement de l'objet avec l'url : " + url);
-            Registry registry = LocateRegistry.getRegistry(1099);
-            registry.rebind("BricoMerlinService", skeleton);
-
-            System.out.println("✅ Serveur RMI lancé avec succès !");
-        } catch (Exception e) {
-            System.err.println("❌ Erreur lors du démarrage du serveur :");
-            e.printStackTrace();
-        }
-        Server server = new Server();
-
-        scheduleDailyTask(7, 0, server, true); // Heure = 7h00
-        scheduleDailyTask(23, 59, server, false);
     }
 
     /**
@@ -142,4 +128,44 @@ public class Server {
                 }
             }, firstRun, period);
         }
+
+    /**
+     * Point d'entrée du serveur RMI BricoMerlin.
+     * Initialise le registre RMI, enregistre le service et lance les tâches planifiées.
+     *
+     * @param args arguments de la ligne de commande (non utilisés)
+     * @throws SQLException en cas d'erreur lors de la création du serveur
+     * @throws RemoteException en cas d'erreur RMI
+     */
+    public static void main(String[] args) throws SQLException, RemoteException {
+        try {
+            // Création du registre RMI sur le port 1099
+            LocateRegistry.createRegistry(1099);
+
+            // Instanciation de l'implémentation du service
+            BricoMerlinServicesImpl bricoMerlinServices = new BricoMerlinServicesImpl();
+
+            // Export du service et obtention du stub RMI
+            IBricoMerlinServices skeleton = (IBricoMerlinServices) UnicastRemoteObject.exportObject(bricoMerlinServices, 0);
+
+            // Liaison du stub dans le registre avec le nom "BricoMerlinService"
+            Registry registry = LocateRegistry.getRegistry(1099);
+            registry.rebind("BricoMerlinService", skeleton);
+
+            System.out.println("✅ Serveur RMI lancé avec succès !");
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors du démarrage du serveur :");
+            e.printStackTrace();
+            // En cas d'erreur critique, on peut décider d'arrêter l'application ici
+            System.exit(1);
+        }
+
+        // Création de l'instance Server (qui fait la connexion au SiegeServeur, etc.)
+        Server server = new Server();
+
+        // Planification des tâches journalières (mise à jour prix, envoi factures)
+        scheduleDailyTask(7, 0, server, true);
+        scheduleDailyTask(23, 59, server, false);
     }
+
+}
