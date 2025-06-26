@@ -17,7 +17,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         super();
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(url, "root","");
+            con = DriverManager.getConnection(url, "root","root");
         } catch (SQLException s){
             s.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -92,78 +92,82 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
      * @throws SQLException
      */
     @Override
-    public void AcheterArticle(String refArticle, int[] qte, boolean paye) throws RemoteException, SQLException {
-        String requeteRecupArticle = "SELECT reference_ID, prix_unitaire, nb_total FROM Article WHERE reference_ID IN (" + refArticle + ")";
+    public void AcheterArticle(List<String> refArticle, List<Integer> qte, boolean paye) throws RemoteException, SQLException {
+        if (refArticle == null || refArticle.isEmpty()) {
+            throw new RemoteException("Aucune référence fournie.");
+        }
+
+        String placeholders = String.join(",", Collections.nCopies(refArticle.size(), "?"));
+        String requeteRecupArticle = "SELECT reference_ID, prix_unitaire, nb_total FROM Article WHERE reference_ID IN (" + placeholders + ")";
 
         try (
-                PreparedStatement requeteStatement = con.prepareStatement(requeteRecupArticle);
-                ResultSet resultats = requeteStatement.executeQuery()
+                PreparedStatement stmt = con.prepareStatement(requeteRecupArticle)
         ) {
-            ResultSetMetaData rsmd = resultats.getMetaData();
-            int nbCols = rsmd.getColumnCount();
-
-            List<String[]> lignesArticles = new ArrayList<>();
-            List<String> refs = new ArrayList<>();
-            List<Integer> stocks = new ArrayList<>();
-            List<Float> prixUnitaires = new ArrayList<>();
-
-            while (resultats.next()) {
-                String[] ligne = new String[nbCols];
-                for (int i = 0; i < nbCols; i++) {
-                    ligne[i] = resultats.getString(i + 1);
-                }
-                lignesArticles.add(ligne);
-                refs.add(resultats.getString("reference_ID"));
-                stocks.add(resultats.getInt("nb_total"));
-                prixUnitaires.add(resultats.getFloat("prix_unitaire"));
+            for (int i = 0; i < refArticle.size(); i++) {
+                stmt.setString(i + 1, refArticle.get(i));
             }
 
-            // Génération de la facture
-            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-            String nomFacture = "facture_" + timeStamp;
-            try (FileWriter writerFacture = new FileWriter("Serveur/Factures/" + nomFacture)) {
-                writerFacture.write("Facture du " + timeStamp + "\n");
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<String> refs = new ArrayList<>();
+                List<Integer> stocks = new ArrayList<>();
+                List<Float> prixUnitaires = new ArrayList<>();
+
+                while (rs.next()) {
+                    refs.add(rs.getString("reference_ID"));
+                    stocks.add(rs.getInt("nb_total"));
+                    prixUnitaires.add(rs.getFloat("prix_unitaire"));
+                }
+
+                if (refs.size() != refArticle.size()) {
+                    throw new RemoteException("Une ou plusieurs références sont introuvables.");
+                }
+
+                for (int i = 0; i < refs.size(); i++) {
+                    if (qte.get(i) > stocks.get(i)) {
+                        throw new RemoteException("Stock insuffisant pour l'article : " + refs.get(i));
+                    }
+                }
+
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                String nomFacture = "facture_" + timeStamp;
+                String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
 
                 float montantTotal = 0;
-                for (int i = 0; i < lignesArticles.size(); i++) {
-                    String[] ligne = lignesArticles.get(i);
-                    for (int j = 0; j < nbCols; j++) {
-                        writerFacture.write(rsmd.getColumnLabel(j + 1) + " : " + ligne[j] + "\n");
+
+                try (FileWriter writer = new FileWriter("Serveur/Factures/" + nomFacture)) {
+                    writer.write("Facture du " + date + "\n---\n");
+
+                    for (int i = 0; i < refs.size(); i++) {
+                        writer.write("Référence : " + refs.get(i) + "\n");
+                        writer.write("Prix unitaire : " + prixUnitaires.get(i) + "\n");
+                        writer.write("Quantité : " + qte.get(i) + "\n");
+                        float total = prixUnitaires.get(i) * qte.get(i);
+                        writer.write("Prix total : " + total + "\n---\n");
+
+                        montantTotal += total;
                     }
-                    writerFacture.write("Quantité : " + qte[i] + "\n");
-                    float prixTotal = qte[i] * prixUnitaires.get(i);
-                    writerFacture.write("Prix total : " + prixTotal + "\n---\n");
 
-                    montantTotal = montantTotal + prixTotal;
-                }
-                writerFacture.write("---\n Total : " + montantTotal);
-
-                String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
-                System.out.println(date);
-                String requeteCreationFacture = "INSERT INTO Facture (facture_ID, paye, montant, date_facture) VALUES ('"+ nomFacture +"', "+ paye +", " + montantTotal + ", '" + date + "')";
-                PreparedStatement requeteStatementMaj = con.prepareStatement(requeteCreationFacture);
-                int resultatInsert = requeteStatementMaj.executeUpdate(requeteCreationFacture);
-                requeteStatement.close(); // fin de requete
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            // Mise à jour des quantités en stock
-            for (int i = 0; i < refs.size(); i++) {
-                String ref = refs.get(i);
-                int stockDisponible = stocks.get(i);
-                int qteDemandee = qte[i];
-
-                if (qteDemandee > stockDisponible) {
-                    throw new RemoteException("Stock insuffisant pour l'article : " + ref);
+                    writer.write("TOTAL : " + montantTotal);
+                } catch (IOException e) {
+                    throw new RemoteException("Erreur lors de l'écriture de la facture.");
                 }
 
-                String requeteMajArticle = "UPDATE Article SET nb_total = nb_total - ? WHERE reference_ID = ?";
-                try (PreparedStatement requeteStatementMaj = con.prepareStatement(requeteMajArticle)) {
-                    requeteStatementMaj.setInt(1, qteDemandee);
-                    requeteStatementMaj.setString(2, ref);
-                    requeteStatementMaj.executeUpdate();
+                String insertFactureSQL = "INSERT INTO Facture (facture_ID, paye, montant, date_facture) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement insertStmt = con.prepareStatement(insertFactureSQL)) {
+                    insertStmt.setString(1, nomFacture);
+                    insertStmt.setBoolean(2, paye);
+                    insertStmt.setFloat(3, montantTotal);
+                    insertStmt.setString(4, date);
+                    insertStmt.executeUpdate();
+                }
+
+                String updateStockSQL = "UPDATE Article SET nb_total = nb_total - ? WHERE reference_ID = ?";
+                try (PreparedStatement updateStmt = con.prepareStatement(updateStockSQL)) {
+                    for (int i = 0; i < refs.size(); i++) {
+                        updateStmt.setInt(1, qte.get(i));
+                        updateStmt.setString(2, refs.get(i));
+                        updateStmt.executeUpdate();
+                    }
                 }
             }
         }
@@ -203,6 +207,20 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
         int resultatUpdate = requeteStatementMaj.executeUpdate(requeteMajArticle);
 
         requeteStatement.close(); // fin de requete
+    }
+
+    @Override
+    public Map<String, Integer> getArticlesAvecStock() throws RemoteException, SQLException {
+        Map<String, Integer> stockMap = new LinkedHashMap<>();
+        String sql = "SELECT reference_ID, nb_total FROM Article";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet resultats = stmt.executeQuery()) {
+            while (resultats.next()) {
+                stockMap.put(resultats.getString("reference_ID"), resultats.getInt("nb_total"));
+            }
+        }
+        return stockMap;
     }
 
     /**

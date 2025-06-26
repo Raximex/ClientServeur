@@ -17,7 +17,7 @@ public class  ISiegeServeurImpl implements ISiegeServeur{
         super();
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(url, "root", "");
+            con = DriverManager.getConnection(url, "root", "root");
         } catch (SQLException s) {
             s.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -27,7 +27,7 @@ public class  ISiegeServeurImpl implements ISiegeServeur{
 
     /**
      * Met a jour les prix dans la base de données du serveur Siege.
-     * @return
+     * @return HashMap<String, Float>
      * @throws RemoteException
      * @throws SQLException
      */

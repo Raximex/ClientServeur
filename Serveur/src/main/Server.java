@@ -29,7 +29,7 @@ public class Server {
 
 
         MiseAjourPrix();// mise à jour du prix lors du lancement du serveur
-        sendFactures();//envoie test
+        //sendFactures();//envoie test
     }
 
 

@@ -6,8 +6,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.*;
+import java.util.List;
 
 public class Client extends JFrame {
     private IBricoMerlinServices stub;
@@ -112,39 +112,64 @@ public class Client extends JFrame {
 
     private void acheterArticle() {
         try {
-            String ref ="";
-            int[] qteR = new int[10];
-            boolean continuer = true;
-            int i = 0;
-            while (continuer) {
-                String resultat =JOptionPane.showInputDialog(this, "Référence de l'article :");
-                ref = ref.concat("'" + resultat + "',");
-                qteR[i] = Integer.parseInt(JOptionPane.showInputDialog(this, "Quantité à acheter :"));
-                JOptionPane.showMessageDialog(this, " Achat effectué avec succès.");
+            Map<String, Integer> stockDispo = stub.getArticlesAvecStock(); // méthode à créer côté serveur
+            List<String> refList = new ArrayList<>(stockDispo.keySet());
+            List<String> refs = new ArrayList<>();
+            List<Integer> qtes = new ArrayList<>();
 
-                int reponse = JOptionPane.showConfirmDialog(this,"Voulez-vous acheter d'autres articles","Continue",JOptionPane.YES_NO_OPTION);
-                i++;
-                if(reponse != JOptionPane.YES_OPTION)
-                {
-                    int paye = JOptionPane.showConfirmDialog(this, "Voulez-vous payer maintenant ?");
-                    boolean payer = false;
-                    if (paye == JOptionPane.YES_OPTION) {
-                        payer = true;
-                    } else {
-                        payer = false;
+            boolean continuer = true;
+            while (continuer) {
+                String article = (String) JOptionPane.showInputDialog(this, "Choisissez un article :", "Articles disponibles",
+                        JOptionPane.QUESTION_MESSAGE, null, refList.toArray(), refList.get(0));
+
+                if (article == null) break;
+
+                int stock = stockDispo.get(article);
+
+                String qteStr = JOptionPane.showInputDialog(this, "Quantité à acheter (stock dispo : " + stock + ") :");
+                if (qteStr == null) continue;
+
+                int qte;
+                try {
+                    qte = Integer.parseInt(qteStr);
+                    if (qte <= 0) {
+                        JOptionPane.showMessageDialog(this, "Quantité invalide.");
+                        continue;
                     }
-                    StringBuilder chaine = new StringBuilder(ref);
-                    chaine.deleteCharAt(chaine.length()-1);
-                    //System.out.println(chaine);
-                    stub.AcheterArticle(String.valueOf(chaine), qteR, payer);
+                    if (qte > stock) {
+                        JOptionPane.showMessageDialog(this, "Stock insuffisant pour cet article.");
+                        continue;
+                    }
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(this, "Quantité non valide.");
+                    continue;
+                }
+
+                int index = refs.indexOf(article);
+                if (index != -1) {
+                    qtes.set(index, qtes.get(index) + qte);
+                } else {
+                    refs.add(article);
+                    qtes.add(qte);
+                }
+
+                stockDispo.put(article, stock - qte);
+
+                int reponse = JOptionPane.showConfirmDialog(this, "Voulez-vous acheter d'autres articles ?", "Continuer", JOptionPane.YES_NO_OPTION);
+                if (reponse != JOptionPane.YES_OPTION) {
+                    boolean payer = JOptionPane.showConfirmDialog(this, "Voulez-vous payer maintenant ?") == JOptionPane.YES_OPTION;
+                    stub.AcheterArticle(refs, qtes, payer);
                     continuer = false;
                 }
             }
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, " Erreur : " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage());
+            ex.printStackTrace();
         }
     }
+
+
 
     private void ajouterStock() {
         try {

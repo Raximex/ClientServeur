@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 // Créer l'interface de l'objet distant
 public interface IBricoMerlinServices extends Remote {  
@@ -16,11 +17,13 @@ public interface IBricoMerlinServices extends Remote {
    String[] ConsulterFamille(String familleArticle) throws RemoteException, SQLException;
 
    //Ajoute l'article demandé à la facture et retire du stock la quantité demandée.
-   void AcheterArticle(String refArticle, int[] qte, boolean paye) throws RemoteException, SQLException;
+   void AcheterArticle(List<String> refArticle, List<Integer> qte, boolean paye) throws RemoteException, SQLException;
 
    //Ajoute une quantité de stock à une référence article. La référence doit déjà exister.
    void AjouterStockArticle(String refArticle, int qte) throws RemoteException, SQLException;
 
+   //Récupère la liste des articles et leur stock
+   Map<String, Integer> getArticlesAvecStock() throws RemoteException, SQLException;
    //#endregion
 
    //#region Facture
