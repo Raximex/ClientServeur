@@ -124,7 +124,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
                 }
 
                 // Génère un nom de facture unique basé sur la date et l'heure
-                String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                 String nomFacture = "facture_" + timeStamp;
                 String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
 
