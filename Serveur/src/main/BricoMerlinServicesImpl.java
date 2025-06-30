@@ -78,11 +78,13 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
      * et enregistre le paiement si demandé.
      */
     @Override
-    public void acheterArticle(List<String> refArticle, List<Integer> qte, boolean paye) throws RemoteException, SQLException {
+    public String acheterArticle(List<String> refArticle, List<Integer> qte, boolean paye) throws RemoteException, SQLException {
         // Vérifie que la liste des références d'articles n'est pas vide
         if (refArticle == null || refArticle.isEmpty()) {
             throw new RemoteException("Aucune référence fournie.");
         }
+
+        String nomFacture = null;
 
         // Crée une chaîne de "?" pour préparer la requête SQL IN (?,?,...),
         // selon le nombre d'articles demandés
@@ -125,7 +127,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
 
                 // Génère un nom de facture unique basé sur la date et l'heure
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-                String nomFacture = "facture_" + timeStamp;
+                nomFacture = "facture_" + timeStamp;
                 String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
 
                 float montantTotal = 0;
@@ -187,6 +189,7 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
                 }
             }
         }
+        return nomFacture;
     }
 
     @Override
@@ -277,12 +280,29 @@ public class BricoMerlinServicesImpl implements IBricoMerlinServices{
     }
 
     @Override
-    public void payerFacture(String idFacture) throws IOException, SQLException {
-        // Exécute la requête pour mettre à jour l'état du paiement dans la base de donnée
-        String requeteMajFacture = "UPDATE Facture SET paye = 1 WHERE facture_ID = ?";
+    public void payerFacture(String idFacture, String modePaiement) throws IOException, SQLException {
+        String datePaiement = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
+
+        // Mise à jour de la BDD
+        String requeteMajFacture = "UPDATE Facture SET paye = 1, mode_paiement = ?, date_paiement = ? WHERE facture_ID = ?";
         try (PreparedStatement stmt = con.prepareStatement(requeteMajFacture)) {
-            stmt.setString(1, idFacture);
+            stmt.setString(1, modePaiement);
+            stmt.setString(2, datePaiement);
+            stmt.setString(3, idFacture);
             stmt.executeUpdate();
+        }
+
+        // Mise à jour du fichier .txt correspondant à la facture
+        File fichierFacture = new File("Serveur/Factures/" + idFacture);
+        if (!fichierFacture.exists()) {
+            throw new FileNotFoundException("Fichier de facture introuvable : " + idFacture);
+        }
+
+        // Ajoute les informations de paiement à la fin du fichier
+        try (FileWriter writer = new FileWriter(fichierFacture, true)) { // true = append mode
+            writer.write("\n---\n");
+            writer.write("✅ Payée le : " + datePaiement + "\n");
+            writer.write("Mode de paiement : " + modePaiement + "\n");
         }
     }
 

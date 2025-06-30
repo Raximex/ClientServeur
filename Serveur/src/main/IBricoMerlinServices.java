@@ -38,10 +38,11 @@ public interface IBricoMerlinServices extends Remote {
     * @param refArticle liste des références articles
     * @param qte quantités correspondantes
     * @param paye true si paiement immédiat
+    * @return l'identifiant de la facture créée
     * @throws RemoteException en cas d'erreur RMI
     * @throws SQLException en cas d'erreur SQL
     */
-   void acheterArticle(List<String> refArticle, List<Integer> qte, boolean paye) throws RemoteException, SQLException;
+   String acheterArticle(List<String> refArticle, List<Integer> qte, boolean paye) throws RemoteException, SQLException;
 
    /**
     * Ajoute une quantité de stock à un article existant.
@@ -81,10 +82,11 @@ public interface IBricoMerlinServices extends Remote {
    /**
     * Permet à un client de payer une facture.
     * @param idFacture identifiant de la facture
+    * @param modePaiement mode de paiement de la facture
     * @throws IOException en cas d'erreur d'entrée/sortie
     * @throws SQLException en cas d'erreur SQL
     */
-   void payerFacture(String idFacture) throws IOException, SQLException;
+   void payerFacture(String idFacture, String modePaiement) throws IOException, SQLException;
 
    /**
     * Affiche le contenu d'une facture sélectionnée.

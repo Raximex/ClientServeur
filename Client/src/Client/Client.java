@@ -208,7 +208,6 @@ public class Client extends JFrame {
      */
     private void acheterArticle() {
         try {
-            // Récupère la liste des articles disponibles avec leur stock (à implémenter côté serveur)
             Map<String, Integer> stockDispo = stub.getArticlesAvecStock();
             List<String> refList = new ArrayList<>(stockDispo.keySet());
             if (refList == null || refList.isEmpty()) {
@@ -216,13 +215,11 @@ public class Client extends JFrame {
                 return;
             }
 
-            // Références et quantités sélectionnées par l'utilisateur
             List<String> refs = new ArrayList<>();
             List<Integer> qtes = new ArrayList<>();
 
             boolean continuer = true;
             while (continuer) {
-                // Sélection d’un article
                 String article = (String) JOptionPane.showInputDialog(
                         this,
                         "Choisissez un article :",
@@ -233,24 +230,17 @@ public class Client extends JFrame {
                         refList.get(0)
                 );
 
-                // Annulation de la sélection
                 if (article == null) break;
 
                 int stock = stockDispo.get(article);
-
-                // Saisie de la quantité
                 String qteStr = JOptionPane.showInputDialog(this, "Quantité à acheter (stock dispo : " + stock + ") :");
                 if (qteStr == null) continue;
 
                 int qte;
                 try {
                     qte = Integer.parseInt(qteStr);
-                    if (qte <= 0) {
-                        JOptionPane.showMessageDialog(this, "Quantité invalide.");
-                        continue;
-                    }
-                    if (qte > stock) {
-                        JOptionPane.showMessageDialog(this, "Stock insuffisant pour cet article.");
+                    if (qte <= 0 || qte > stock) {
+                        JOptionPane.showMessageDialog(this, "Quantité invalide ou stock insuffisant.");
                         continue;
                     }
                 } catch (NumberFormatException e) {
@@ -258,7 +248,6 @@ public class Client extends JFrame {
                     continue;
                 }
 
-                // Si l’article est déjà dans la sélection, on cumule les quantités
                 int index = refs.indexOf(article);
                 if (index != -1) {
                     qtes.set(index, qtes.get(index) + qte);
@@ -267,14 +256,36 @@ public class Client extends JFrame {
                     qtes.add(qte);
                 }
 
-                // Mise à jour temporaire du stock côté client pour éviter dépassement
                 stockDispo.put(article, stock - qte);
 
-                // Confirmation de continuer ou de payer
                 int reponse = JOptionPane.showConfirmDialog(this, "Voulez-vous acheter d'autres articles ?", "Continuer", JOptionPane.YES_NO_OPTION);
                 if (reponse != JOptionPane.YES_OPTION) {
                     boolean payer = JOptionPane.showConfirmDialog(this, "Voulez-vous payer maintenant ?") == JOptionPane.YES_OPTION;
-                    stub.acheterArticle(refs, qtes, payer);
+
+                    // ACHAT D'ARTICLE - Retourne l'ID de la facture
+                    String idFacture = stub.acheterArticle(refs, qtes, payer);
+
+                    // SI L'UTILISATEUR VEUT PAYER MAINTENANT
+                    if (payer && idFacture != null) {
+                        String[] moyensPaiement = {"Carte bancaire", "Virement", "Chèque", "Espèces"};
+                        String modePaiement = (String) JOptionPane.showInputDialog(
+                                this,
+                                "Choisissez un moyen de paiement :",
+                                "Mode de paiement",
+                                JOptionPane.QUESTION_MESSAGE,
+                                null,
+                                moyensPaiement,
+                                moyensPaiement[0]
+                        );
+
+                        if (modePaiement != null) {
+                            stub.payerFacture(idFacture, modePaiement);
+                            JOptionPane.showMessageDialog(this, "✅ Facture payée avec succès.");
+                        } else {
+                            JOptionPane.showMessageDialog(this, "❌ Paiement annulé.");
+                        }
+                    }
+
                     continuer = false;
                 }
             }
@@ -284,6 +295,7 @@ public class Client extends JFrame {
             ex.printStackTrace();
         }
     }
+
 
     /**
      * Permet à l'utilisateur d'ajouter une quantité de stock à un article sélectionné.
@@ -334,7 +346,8 @@ public class Client extends JFrame {
     }
 
     /**
-     * Permet à l'utilisateur de payer une facture sélectionnée parmi les factures non réglées.
+     * Permet à l'utilisateur de payer une facture sélectionnée parmi les factures non réglées
+     * en sélectionnant un mode de paiement.
      * Affiche une confirmation ou un message d'erreur en fonction du résultat.
      */
     private void payerFacture() {
@@ -357,11 +370,24 @@ public class Client extends JFrame {
                     facturesNonPayees.get(0)
             );
 
-            // Annulation de l'action
-            if (id == null) return;
+            if (id == null) return; // annulation
 
-            // Paiement via le serveur
-            stub.payerFacture(id);
+            // Sélection du mode de paiement
+            String[] modesPaiement = {"Carte bancaire", "Virement", "Chèque", "Espèces"};
+            String modePaiement = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Sélectionnez le mode de paiement :",
+                    "Mode de paiement",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    modesPaiement,
+                    modesPaiement[0]
+            );
+
+            if (modePaiement == null) return; // annulation
+
+            // Paiement via le serveur avec le mode de paiement
+            stub.payerFacture(id, modePaiement);
             JOptionPane.showMessageDialog(this, "✅ Facture payée avec succès.");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "❌ Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
